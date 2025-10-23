@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: gesbanque_app
+    ports:
+      - "8010:10000"  # nouveau port Laravel pour éviter les conflits
+    volumes:
+      - .:/var/www/html
+    environment:
+      - DB_CONNECTION=pgsql
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_DATABASE=ges_banque
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=1234
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - APP_URL=http://localhost:8010
+    depends_on:
+      - db
+
+  db:
+    image: postgres:15
+    container_name: gesbanque_db
+    restart: always
+    environment:
+      POSTGRES_DB: ges_banque
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+    ports:
+      - "5440:5432" # port PostgreSQL différent de AppDAF
+    volumes:
+      - pgdata_gb:/var/lib/postgresql/data
+
+volumes:
+  pgdata_gb:
