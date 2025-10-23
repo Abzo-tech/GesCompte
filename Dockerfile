@@ -28,6 +28,11 @@ COPY --from=composer-build /app/vendor ./vendor
 # Copier le reste du code de l'application
 COPY . .
 
+COPY --chown=laravel:laravel resources/views /var/www/html/resources/views
+#donner les autorisation
+RUN chown -R laravel:laravel /var/www/html/resources/views
+
+
 # Créer les répertoires nécessaires et définir les permissions
 RUN mkdir -p storage/framework/{cache,data,sessions,testing,views} \
     && mkdir -p storage/logs \
