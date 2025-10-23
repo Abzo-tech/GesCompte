@@ -1,0 +1,94 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "API GesBanque",
+        "description": "Documentation de l'API GesBanque générée avec Swagger",
+        "contact": {
+            "name": "Équipe GesBanque",
+            "email": "contact@gesbanque.com"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8000",
+            "description": "Serveur local"
+        },
+        {
+            "url": "/api/v1"
+        }
+    ],
+    "paths": {
+        "/api/v1/comptes": {
+            "get": {
+                "tags": [
+                    "Comptes"
+                ],
+                "summary": "Lister tous les comptes",
+                "operationId": "e08298dbea7e337b2ce3af7d443388c7",
+                "responses": {
+                    "200": {
+                        "description": "Liste des comptes",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Compte"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Compte": {
+                "title": "Compte",
+                "description": "Représente un compte bancaire",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "numero": {
+                        "type": "string",
+                        "example": "1234567890"
+                    },
+                    "type": {
+                        "type": "string",
+                        "example": "epargne"
+                    },
+                    "statut": {
+                        "type": "string",
+                        "example": "actif"
+                    },
+                    "solde": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 1500.5
+                    }
+                },
+                "type": "object"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Comptes",
+            "description": "Comptes"
+        }
+    ]
+}

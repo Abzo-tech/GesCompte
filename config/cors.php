@@ -19,7 +19,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['*'],
+    'allowed_origins' => ['*'], // ou mettre l'URL exacte de ton frontend, ex: 'http://localhost:3000'
 
     'allowed_origins_patterns' => [],
 
@@ -30,5 +30,4 @@ return [
     'max_age' => 0,
 
     'supports_credentials' => false,
-
 ];
