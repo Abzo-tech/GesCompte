@@ -28,6 +28,7 @@ COPY --from=composer-build /app/vendor ./vendor
 # Copier le reste du code de l'application
 COPY . .
 COPY --chown=laravel:laravel resources/views /var/www/html/resources/views
+#donner les autorisation
 RUN chown -R laravel:laravel /var/www/html/resources/views
 
 
