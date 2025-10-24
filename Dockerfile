@@ -41,7 +41,8 @@ RUN mkdir -p storage/framework/cache \
     && mkdir -p bootstrap/cache \
     && chown -R laravel:laravel /var/www/html \
     && chmod -R 775 storage bootstrap/cache \
-    && chmod -R 775 storage/framework
+    && chmod -R 775 storage/framework \
+    && chmod -R 775 storage/framework/sessions
 
 # Créer un fichier .env minimal
 RUN echo "APP_NAME=Laravel" > .env && \
