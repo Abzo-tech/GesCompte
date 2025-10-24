@@ -19,5 +19,8 @@ php artisan config:cache
 php artisan route:cache
 php artisan view:cache || true  # éviter l'échec si pas de vues
 
+# Générer la documentation Swagger
+php artisan l5-swagger:generate
+
 # Lancer le serveur Laravel
 php artisan serve --host=0.0.0.0 --port=8000
