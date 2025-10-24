@@ -6,20 +6,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
 /**
- * @OA\Info(
- *     title="API GesBanque",
- *     version="1.0.0",
- *     description="Documentation de l'API GesBanque générée avec Swagger",
- *     @OA\Contact(
- *         email="contact@gesbanque.com",
- *         name="Équipe GesBanque"
- *     )
- * ),
- * @OA\Server(
- *     url="https://gescompte-1.onrender.com",
- *     description="Serveur de production"
- * )
- * 
  * @OA\Schema(
  *     schema="Compte",
  *     type="object",
