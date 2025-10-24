@@ -4,17 +4,17 @@ namespace App\Http\Controllers;
 
 /**
  * @OA\Info(
- *     title="API GesBanque",
+ *     title="Aboubakry Dieng Ges-Compte API",
  *     version="1.0.0",
- *     description="Documentation de l'API GesBanque générée avec Swagger",
+ *     description="Documentation de l'API Ges-Compte développée par Aboubakry Dieng",
  *     @OA\Contact(
- *         email="contact@gesbanque.com",
- *         name="Équipe GesBanque"
+ *         email="aboubakry.dieng@example.com",
+ *         name="Aboubakry Dieng"
  *     )
  * ),
  * @OA\Server(
- *     url="http://localhost:8000",
- *     description="Serveur local"
+ *     url="https://gescompte-1.onrender.com",
+ *     description="Serveur de production"
  * )
  */
 class SwaggerController extends Controller
