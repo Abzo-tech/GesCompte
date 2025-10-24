@@ -32,11 +32,16 @@ RUN rm -rf storage/framework/views/*
 COPY --chown=laravel:laravel resources/views /var/www/html/resources/views
 
 # Créer les répertoires nécessaires et définir les permissions
-RUN mkdir -p storage/framework/{cache,data,sessions,testing,views} \
+RUN mkdir -p storage/framework/cache \
+    && mkdir -p storage/framework/data \
+    && mkdir -p storage/framework/sessions \
+    && mkdir -p storage/framework/testing \
+    && mkdir -p storage/framework/views \
     && mkdir -p storage/logs \
     && mkdir -p bootstrap/cache \
     && chown -R laravel:laravel /var/www/html \
-    && chmod -R 775 storage bootstrap/cache
+    && chmod -R 775 storage bootstrap/cache \
+    && chmod -R 775 storage/framework
 
 # Créer un fichier .env minimal
 RUN echo "APP_NAME=Laravel" > .env && \
