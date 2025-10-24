@@ -27,6 +27,8 @@ COPY --from=composer-build /app/vendor ./vendor
 
 # Copier le reste du code
 COPY . .
+# Remove local compiled views to avoid path mismatches in container
+RUN rm -rf storage/framework/views/*
 COPY --chown=laravel:laravel resources/views /var/www/html/resources/views
 
 # Créer les répertoires nécessaires et définir les permissions
@@ -55,7 +57,8 @@ RUN echo "APP_NAME=Laravel" > .env && \
     echo "" >> .env && \
     echo "CACHE_DRIVER=file" >> .env && \
     echo "SESSION_DRIVER=file" >> .env && \
-    echo "QUEUE_CONNECTION=sync" >> .env
+    echo "QUEUE_CONNECTION=sync" >> .env && \
+    echo "VIEW_COMPILED_PATH=/var/www/html/storage/framework/views" >> .env
 
 # Changer les permissions du fichier .env
 RUN chown laravel:laravel .env
