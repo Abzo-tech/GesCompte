@@ -17,7 +17,9 @@ class CompteFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'type' => $this->faker->randomElement(['epargne', 'cheque', 'courant']),
+            'statut' => $this->faker->randomElement(['actif', 'bloque', 'ferme']),
+            'client_id' => \App\Models\Client::factory(),
         ];
     }
 }

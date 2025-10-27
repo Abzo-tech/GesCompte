@@ -19,5 +19,17 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 use App\Http\Controllers\Api\V1\CompteController;
+use App\Http\Controllers\Api\V1\ClientController;
+use App\Http\Controllers\Api\V1\TransactionController;
 
-Route::get('/v1/comptes', [CompteController::class, 'index']);
+// Routes API V1
+Route::prefix('v1')->group(function () {
+    // Routes des comptes
+    Route::apiResource('comptes', CompteController::class);
+
+    // Routes des clients
+    Route::apiResource('clients', ClientController::class);
+
+    // Routes des transactions
+    Route::apiResource('transactions', TransactionController::class);
+});

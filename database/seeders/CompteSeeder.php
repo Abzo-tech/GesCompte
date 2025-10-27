@@ -12,6 +12,24 @@ class CompteSeeder extends Seeder
      */
     public function run(): void
     {
-        //
+        // Récupération du client créé
+        $client = \App\Models\Client::first();
+
+        if ($client) {
+            // Création manuelle de comptes
+            \App\Models\Compte::create([
+                'numero' => 'CMPT2025001',
+                'type' => 'courant',
+                'statut' => 'actif',
+                'client_id' => $client->id
+            ]);
+
+            \App\Models\Compte::create([
+                'numero' => 'CMPT2025002',
+                'type' => 'epargne',
+                'statut' => 'actif',
+                'client_id' => $client->id
+            ]);
+        }
     }
 }

@@ -1,0 +1,41 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('transactions', function (Blueprint $table) {
+            $table->id();
+            $table->string('reference', 50)->unique();
+            $table->foreignId('compte_id')->constrained()->onDelete('cascade');
+            $table->enum('type', ['depot', 'retrait', 'virement', 'paiement'])->default('depot');
+            $table->decimal('montant', 15, 2);
+            $table->text('description')->nullable();
+            $table->string('beneficiaire')->nullable();
+            $table->timestamp('date_transaction');
+            $table->timestamps();
+
+            $table->index(['reference']);
+            $table->index(['compte_id']);
+            $table->index(['type']);
+            $table->index(['date_transaction']);
+            $table->index(['compte_id', 'type']);
+            $table->index(['date_transaction', 'type']);
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('transactions');
+    }
+};
