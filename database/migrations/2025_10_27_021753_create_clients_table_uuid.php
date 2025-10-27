@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('clients', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->string('nom');
             $table->string('prenom');
             $table->string('email')->unique();
@@ -21,8 +21,11 @@ return new class extends Migration
             $table->enum('statut', ['actif', 'inactif', 'suspendu'])->default('actif');
             $table->timestamps();
 
+            // Index optimisés pour les performances
             $table->index(['email']);
             $table->index(['statut']);
+            $table->index(['nom', 'prenom']);
+            $table->index(['created_at']);
         });
     }
 
