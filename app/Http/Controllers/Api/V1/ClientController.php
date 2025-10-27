@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Client;
+use App\Validations\ClientValidation;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 
 /**
  * @OA\Schema(
@@ -12,7 +14,7 @@ use Illuminate\Http\Request;
  *     type="object",
  *     title="Client",
  *     description="Représente un client bancaire",
- *     @OA\Property(property="id", type="integer", example=1),
+ *     @OA\Property(property="id", type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000"),
  *     @OA\Property(property="nom", type="string", example="Martin"),
  *     @OA\Property(property="prenom", type="string", example="Jean"),
  *     @OA\Property(property="email", type="string", example="jean.martin@example.com"),
@@ -27,7 +29,7 @@ class ClientController extends Controller
 {
     /**
      * @OA\Get(
-     *     path="/api/v1/clients",
+     *     path="/dieng/v1/clients",
      *     summary="Lister tous les clients",
      *     tags={"Clients"},
      *     @OA\Response(
@@ -41,7 +43,7 @@ class ClientController extends Controller
      *     )
      * )
      */
-    public function index()
+    public function index(): JsonResponse
     {
         $clients = Client::with('comptes')->get();
 
@@ -53,7 +55,7 @@ class ClientController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/v1/clients",
+     *     path="/dieng/v1/clients",
      *     summary="Créer un nouveau client",
      *     tags={"Clients"},
      *     @OA\RequestBody(
@@ -73,21 +75,42 @@ class ClientController extends Controller
      *         response=201,
      *         description="Client créé",
      *         @OA\JsonContent(ref="#/components/schemas/Client")
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Erreurs de validation"
      *     )
      * )
      */
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'nom' => 'required|string|max:255',
-            'prenom' => 'required|string|max:255',
-            'email' => 'required|email|unique:clients,email',
-            'telephone' => 'nullable|string|max:20',
-            'adresse' => 'nullable|string',
-            'statut' => 'in:actif,inactif,suspendu'
-        ]);
+        // Validation des données
+        $errors = ClientValidation::validateCreate($request->all());
+        if (!empty($errors)) {
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => 'VALIDATION_ERROR',
+                    'message' => 'Erreurs de validation',
+                    'details' => $errors
+                ]
+            ], 422);
+        }
 
-        $client = Client::create($validated);
+        // Vérification unicité email
+        if (!ClientValidation::isEmailUnique($request->email)) {
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => 'EMAIL_NOT_UNIQUE',
+                    'message' => 'Cet email est déjà utilisé',
+                    'details' => ['email' => 'L\'email doit être unique']
+                ]
+            ], 422);
+        }
+
+        // Création du client
+        $client = Client::create($request->all());
 
         return response()->json([
             'success' => true,
@@ -97,14 +120,14 @@ class ClientController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/api/v1/clients/{id}",
+     *     path="/dieng/v1/clients/{id}",
      *     summary="Obtenir un client spécifique",
      *     tags={"Clients"},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
-     *         @OA\Schema(type="integer")
+     *         @OA\Schema(type="string", format="uuid")
      *     ),
      *     @OA\Response(
      *         response=200,
@@ -117,7 +140,7 @@ class ClientController extends Controller
      *     )
      * )
      */
-    public function show($id)
+    public function show(string $id): JsonResponse
     {
         $client = Client::with('comptes.transactions')->findOrFail($id);
 
@@ -129,14 +152,14 @@ class ClientController extends Controller
 
     /**
      * @OA\Put(
-     *     path="/api/v1/clients/{id}",
+     *     path="/dieng/v1/clients/{id}",
      *     summary="Mettre à jour un client",
      *     tags={"Clients"},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
-     *         @OA\Schema(type="integer")
+     *         @OA\Schema(type="string", format="uuid")
      *     ),
      *     @OA\RequestBody(
      *         required=true,
@@ -154,23 +177,44 @@ class ClientController extends Controller
      *         response=200,
      *         description="Client mis à jour",
      *         @OA\JsonContent(ref="#/components/schemas/Client")
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Erreurs de validation"
      *     )
      * )
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, string $id): JsonResponse
     {
         $client = Client::findOrFail($id);
 
-        $validated = $request->validate([
-            'nom' => 'sometimes|string|max:255',
-            'prenom' => 'sometimes|string|max:255',
-            'email' => 'sometimes|email|unique:clients,email,' . $id,
-            'telephone' => 'nullable|string|max:20',
-            'adresse' => 'nullable|string',
-            'statut' => 'in:actif,inactif,suspendu'
-        ]);
+        // Validation des données
+        $errors = ClientValidation::validateUpdate($request->all());
+        if (!empty($errors)) {
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => 'VALIDATION_ERROR',
+                    'message' => 'Erreurs de validation',
+                    'details' => $errors
+                ]
+            ], 422);
+        }
 
-        $client->update($validated);
+        // Vérification unicité email si fourni
+        if ($request->has('email') && !ClientValidation::isEmailUnique($request->email, $id)) {
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => 'EMAIL_NOT_UNIQUE',
+                    'message' => 'Cet email est déjà utilisé',
+                    'details' => ['email' => 'L\'email doit être unique']
+                ]
+            ], 422);
+        }
+
+        // Mise à jour du client
+        $client->update($request->all());
 
         return response()->json([
             'success' => true,
@@ -180,14 +224,14 @@ class ClientController extends Controller
 
     /**
      * @OA\Delete(
-     *     path="/api/v1/clients/{id}",
+     *     path="/dieng/v1/clients/{id}",
      *     summary="Supprimer un client",
      *     tags={"Clients"},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         required=true,
-     *         @OA\Schema(type="integer")
+     *         @OA\Schema(type="string", format="uuid")
      *     ),
      *     @OA\Response(
      *         response=204,
@@ -199,7 +243,7 @@ class ClientController extends Controller
      *     )
      * )
      */
-    public function destroy($id)
+    public function destroy(string $id): JsonResponse
     {
         $client = Client::findOrFail($id);
         $client->delete();

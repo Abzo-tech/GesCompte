@@ -25,7 +25,7 @@ class CompteController extends Controller
 {
     /**
      * @OA\Get(
-     *     path="/api/v1/comptes",
+     *     path="/dieng/v1/comptes",
      *     summary="Lister tous les comptes",
      *     tags={"Comptes"},
      *     @OA\Response(
@@ -51,7 +51,7 @@ class CompteController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/api/v1/comptes/{id}",
+     *     path="/dieng/v1/comptes/{id}",
      *     summary="Obtenir un compte spécifique",
      *     tags={"Comptes"},
      *     @OA\Parameter(
@@ -83,7 +83,7 @@ class CompteController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/v1/comptes",
+     *     path="/dieng/v1/comptes",
      *     summary="Créer un nouveau compte",
      *     tags={"Comptes"},
      *     @OA\RequestBody(
@@ -122,7 +122,7 @@ class CompteController extends Controller
 
     /**
      * @OA\Put(
-     *     path="/api/v1/comptes/{id}",
+     *     path="/dieng/v1/comptes/{id}",
      *     summary="Mettre à jour un compte",
      *     tags={"Comptes"},
      *     @OA\Parameter(
@@ -166,7 +166,7 @@ class CompteController extends Controller
 
     /**
      * @OA\Delete(
-     *     path="/api/v1/comptes/{id}",
+     *     path="/dieng/v1/comptes/{id}",
      *     summary="Supprimer un compte",
      *     tags={"Comptes"},
      *     @OA\Parameter(

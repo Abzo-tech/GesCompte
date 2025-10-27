@@ -5,14 +5,14 @@ return [
     'documentations' => [
         'default' => [
             'api' => [
-                'title' => 'L5 Swagger UI',
+                'title' => 'Aboubakry Dieng Ges-Compte API',
             ],
 
             'routes' => [
                 /*
                  * Route for accessing api documentation interface
                  */
-                'api' => 'api/documentation',
+                'api' => 'dieng/documentation',
             ],
             'paths' => [
                 /*
@@ -60,7 +60,7 @@ return [
             /*
              * Route for Oauth2 authentication callback.
              */
-            'oauth2_callback' => 'api/oauth2-callback',
+            'oauth2_callback' => 'dieng/oauth2-callback',
 
             /*
              * Middleware allows to prevent unexpected access to API documentation
@@ -92,7 +92,7 @@ return [
             /*
              * Edit to set the api's base path
              */
-            'base' => env('L5_SWAGGER_BASE_PATH', '/api/v1'),
+            'base' => env('L5_SWAGGER_BASE_PATH', '/dieng/v1'),
 
             /*
              * Absolute path to directories that should be excluded from scanning

@@ -15,17 +15,17 @@
             "description": "Serveur de production"
         },
         {
-            "url": "/api/v1"
+            "url": "/dieng/v1"
         }
     ],
     "paths": {
-        "/api/v1/clients": {
+        "/dieng/v1/clients": {
             "get": {
                 "tags": [
                     "Clients"
                 ],
                 "summary": "Lister tous les clients",
-                "operationId": "3dc702c49ee2caa5dd56328483587398",
+                "operationId": "b8f7770217b59b25e09b549555534fb3",
                 "responses": {
                     "200": {
                         "description": "Liste des clients",
@@ -56,7 +56,7 @@
                     "Clients"
                 ],
                 "summary": "Créer un nouveau client",
-                "operationId": "fa5db0d5e257989e36bfe9cc2de663c2",
+                "operationId": "6ab72af2f0e65fab6c858ec7d6e2d2a1",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -108,24 +108,28 @@
                                 }
                             }
                         }
+                    },
+                    "422": {
+                        "description": "Erreurs de validation"
                     }
                 }
             }
         },
-        "/api/v1/clients/{id}": {
+        "/dieng/v1/clients/{id}": {
             "get": {
                 "tags": [
                     "Clients"
                 ],
                 "summary": "Obtenir un client spécifique",
-                "operationId": "2bf7eab4fa46488323468a3bc0de3908",
+                "operationId": "b5ff37fe3c53bc1f0d966858a5e604ee",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid"
                         }
                     }
                 ],
@@ -150,14 +154,15 @@
                     "Clients"
                 ],
                 "summary": "Mettre à jour un client",
-                "operationId": "39adf22f0f031ed10ae8498e15f1f3fc",
+                "operationId": "15549e845a354a10b73ad310f3ff1546",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid"
                         }
                     }
                 ],
@@ -207,6 +212,9 @@
                                 }
                             }
                         }
+                    },
+                    "422": {
+                        "description": "Erreurs de validation"
                     }
                 }
             },
@@ -215,14 +223,15 @@
                     "Clients"
                 ],
                 "summary": "Supprimer un client",
-                "operationId": "b958c57e10640016caeffaf768b5fd05",
+                "operationId": "2094af60c5efb19188f223032e3d0769",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "string",
+                            "format": "uuid"
                         }
                     }
                 ],
@@ -236,13 +245,13 @@
                 }
             }
         },
-        "/api/v1/comptes": {
+        "/dieng/v1/comptes": {
             "get": {
                 "tags": [
                     "Comptes"
                 ],
                 "summary": "Lister tous les comptes",
-                "operationId": "e08298dbea7e337b2ce3af7d443388c7",
+                "operationId": "87b9b02eb26c1d1247869ae0ed04b310",
                 "responses": {
                     "200": {
                         "description": "Liste des comptes",
@@ -273,7 +282,7 @@
                     "Comptes"
                 ],
                 "summary": "Créer un nouveau compte",
-                "operationId": "c4b9822f8407aeeaa6ed3cf36ed4ad35",
+                "operationId": "c3a546171521fe028023631f9541756b",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -323,13 +332,13 @@
                 }
             }
         },
-        "/api/v1/comptes/{id}": {
+        "/dieng/v1/comptes/{id}": {
             "get": {
                 "tags": [
                     "Comptes"
                 ],
                 "summary": "Obtenir un compte spécifique",
-                "operationId": "78a5bf0e4067fef67a2df695f8e865a1",
+                "operationId": "c202fd197f616fbe78ef941f70450bcb",
                 "parameters": [
                     {
                         "name": "id",
@@ -361,7 +370,7 @@
                     "Comptes"
                 ],
                 "summary": "Mettre à jour un compte",
-                "operationId": "e3881fc7f13fec9e0d43777cb4392511",
+                "operationId": "29cdc774db8b2160f547ad262472e44e",
                 "parameters": [
                     {
                         "name": "id",
@@ -418,7 +427,7 @@
                     "Comptes"
                 ],
                 "summary": "Supprimer un compte",
-                "operationId": "9d64c974a58e7a3ee108815cd435c1c5",
+                "operationId": "916274b18e148aa461b6300a034bf48e",
                 "parameters": [
                     {
                         "name": "id",
@@ -439,13 +448,13 @@
                 }
             }
         },
-        "/api/v1/transactions": {
+        "/dieng/v1/transactions": {
             "get": {
                 "tags": [
                     "Transactions"
                 ],
                 "summary": "Lister toutes les transactions",
-                "operationId": "0ffe6bf7980513c9d322e1ba4d400ff2",
+                "operationId": "38d25e5101020bd5de319987075f3fb3",
                 "responses": {
                     "200": {
                         "description": "Liste des transactions",
@@ -476,7 +485,7 @@
                     "Transactions"
                 ],
                 "summary": "Créer une nouvelle transaction",
-                "operationId": "b0ee1d82e907b370897f7c2adde8a664",
+                "operationId": "c844936deef3ac59a6677c41619a706f",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -535,13 +544,13 @@
                 }
             }
         },
-        "/api/v1/transactions/{id}": {
+        "/dieng/v1/transactions/{id}": {
             "get": {
                 "tags": [
                     "Transactions"
                 ],
                 "summary": "Obtenir une transaction spécifique",
-                "operationId": "c9e072c8c645241005e971a691e8338e",
+                "operationId": "940dedd779f198dee0454ba09b283bbd",
                 "parameters": [
                     {
                         "name": "id",
@@ -573,7 +582,7 @@
                     "Transactions"
                 ],
                 "summary": "Mettre à jour une transaction",
-                "operationId": "7be6f226f094053033fa504c693d257c",
+                "operationId": "e0479e66a66515e13c204b31c9aca132",
                 "parameters": [
                     {
                         "name": "id",
@@ -638,7 +647,7 @@
                     "Transactions"
                 ],
                 "summary": "Supprimer une transaction",
-                "operationId": "db289b0d1fea21825cc577ddeb7f2157",
+                "operationId": "6be91c3da748f05be52065dab933b82d",
                 "parameters": [
                     {
                         "name": "id",
@@ -667,8 +676,9 @@
                 "description": "Représente un client bancaire",
                 "properties": {
                     "id": {
-                        "type": "integer",
-                        "example": 1
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "550e8400-e29b-41d4-a716-446655440000"
                     },
                     "nom": {
                         "type": "string",
