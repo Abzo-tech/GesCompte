@@ -19,7 +19,7 @@ services:
 
       # 2. Attendre que la base de données Neon soit prête.
       # Ce script va essayer de se connecter toutes les 5 secondes, jusqu'à 12 fois (total 60 secondes).
-      until php -r "try { new PDO(\"pgsql:host=$DB_HOST;port=$DB_PORT;dbname=$DB_DATABASE;sslmode=require\", \"$DB_USERNAME\", \"$DB_PASSWORD\"); } catch (Exception \$e) { exit(1); }"; do
+      until php -r '$host=getenv("DB_HOST"); $port=getenv("DB_PORT"); $db=getenv("DB_DATABASE"); $user=getenv("DB_USERNAME"); $pass=getenv("DB_PASSWORD"); try { new PDO("pgsql:host=$host;port=$port;dbname=$db;sslmode=require", $user, $pass); } catch (Exception $e) { exit(1); }'; do
           echo "La base de données est en sommeil, nouvelle tentative dans 5 secondes...";
           sleep 5;
       done
