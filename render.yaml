@@ -1,19 +1,21 @@
 services:
   - type: web
+    region: frankfurt # Optionnel: choisissez la région la plus proche de vos utilisateurs
     name: gescompte
     env: php
     buildCommand: |
       # Installation des dépendances
       composer install --no-interaction --optimize-autoloader --no-dev
-      
-      # Configuration de l'application
-      php artisan config:clear
-      php artisan config:cache
+
       
       # Création du fichier .env s'il n'existe pas
       if [ ! -f ".env" ]; then
         cp .env.example .env
       fi
+      if [ ! -f ".env" ]; then cp .env.example .env; fi
+      # La clé d'application (APP_KEY) est gérée par Render via les envVars, donc pas besoin de la générer ici.
+      # Si APP_KEY n'était pas gérée par Render, la commande suivante serait nécessaire:
+      # # php artisan key:generate --force
 
       # Génération de la clé d'application
       php -r "\$envFile = '.env'; \
@@ -21,29 +23,33 @@ services:
         \$content = file_get_contents(\$envFile); \
         \$content = preg_replace('/^APP_KEY=.*/m', 'APP_KEY=' . \$key, \$content); \
         file_put_contents(\$envFile, \$content);"
-      
+
+      # Exécution des migrations pour créer les tables AVANT la mise en cache
+      php artisan migrate --force
+      # Le flag --force est nécessaire pour l'exécution en mode non-interactif (production)
+      php artisan migrate --force --seed
+
       # Configuration de l'application
-      php artisan config:clear
+      php artisan config:clear # Effacer l'ancien cache s'il existe
       php artisan config:cache
-      
+
       # Optimisation des routes et vues
       php artisan route:clear
       php artisan route:cache
       php artisan view:clear
       php artisan view:cache
 
-      # Exécution des migrations pour créer les tables
-      php artisan migrate --force
-
       # Configuration et génération de la documentation Swagger
       if [ -f "vendor/darkaonline/l5-swagger/src/helpers.php" ]; then
         php artisan vendor:publish --provider="L5Swagger\L5SwaggerServiceProvider" --tag=config
+        php artisan vendor:publish --provider="L5Swagger\L5SwaggerServiceProvider" --tag=config --force # Publie la configuration Swagger
         php artisan l5-swagger:generate --all || echo "Warning: Swagger generation failed but continuing..."
       else
         echo "Warning: L5-Swagger package not found, skipping Swagger generation"
       fi
     startCommand: >
       php artisan serve --host=0.0.0.0 --port=$PORT
+      /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisor.conf
     envVars:
       - key: APP_ENV
         value: production
