@@ -1,0 +1,15 @@
+                      Liste des relations
+ Schéma |              Nom              | Type  | Propriétaire 
+--------+-------------------------------+-------+--------------
+ public | failed_jobs                   | table | postgres
+ public | migrations                    | table | postgres
+ public | oauth_access_tokens           | table | postgres
+ public | oauth_auth_codes              | table | postgres
+ public | oauth_clients                 | table | postgres
+ public | oauth_personal_access_clients | table | postgres
+ public | oauth_refresh_tokens          | table | postgres
+ public | password_reset_tokens         | table | postgres
+ public | personal_access_tokens        | table | postgres
+ public | users                         | table | postgres
+(10 lignes)
+
