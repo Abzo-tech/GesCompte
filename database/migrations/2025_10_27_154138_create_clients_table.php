@@ -22,7 +22,6 @@ return new class extends Migration
             $table->timestamps();
 
             // Index optimisés pour les performances
-            $table->index(['email']);
             $table->index(['statut']);
             $table->index(['nom', 'prenom']);
             $table->index(['created_at']);
