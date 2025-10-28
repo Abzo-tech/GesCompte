@@ -7,25 +7,26 @@ services:
       # Installation des dépendances
       composer install --no-interaction --optimize-autoloader --no-dev
 
+      # 1. Effacer tous les caches pour garantir une configuration fraîche
+      php artisan config:clear
+      php artisan route:clear
+      php artisan view:clear
+
       # Création du fichier .env s'il n'existe pas
       if [ ! -f ".env" ]; then cp .env.example .env; fi
 
       # La clé d'application (APP_KEY) est gérée par Render via les envVars, donc pas besoin de la générer ici.
-      # La commande "php artisan key:generate --force" est donc inutile ici.
 
-      # Exécution des migrations pour créer les tables AVANT la mise en cache
+      # 2. Exécution des migrations. Laravel lira maintenant les variables d'environnement directement.
       # Le flag --force est nécessaire pour l'exécution en mode non-interactif (production)
       php artisan migrate --force --seed
 
-      # Configuration de l'application
+      # 3. Mise en cache de la configuration et des routes pour la production
       php artisan config:cache
-
-      # Optimisation des routes et vues
-      php artisan route:clear
       php artisan route:cache
       php artisan view:cache
 
-      # Configuration et génération de la documentation Swagger
+      # 4. Génération de la documentation Swagger
       if [ -f "vendor/darkaonline/l5-swagger/src/helpers.php" ]; then
         php artisan l5-swagger:generate --all || echo "Warning: Swagger generation failed but continuing..."
       else
