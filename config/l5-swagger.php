@@ -13,12 +13,18 @@ return [
                  * Route for accessing api documentation interface
                  */
                 'api' => 'dieng/documentation',
+                'docs' => 'dieng/docs',
+                'oauth2_callback' => 'dieng/oauth2-callback',
+                'middleware' => [
+                    'api' => ['web'],
+                ]
             ],
             'paths' => [
                 /*
                  * Edit to include full URL in ui for assets
                  */
                 'use_absolute_path' => false,
+                'base' => 'dieng',
 
                 /*
                 * Edit to set path where swagger ui assets should be stored

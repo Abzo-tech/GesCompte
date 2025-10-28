@@ -47,7 +47,7 @@ RUN mkdir -p storage/framework/cache \
 # Créer un fichier .env minimal
 RUN echo "APP_NAME=Laravel" > .env && \
     echo "APP_ENV=production" >> .env && \
-    echo "APP_KEY=" >> .env && \
+    echo "APP_KEY=base64:`php -r \"echo base64_encode(random_bytes(32));\"`" >> .env && \
     echo "APP_DEBUG=false" >> .env && \
     echo "APP_URL=https://gescompte-1.onrender.com" >> .env && \
     echo "" >> .env && \

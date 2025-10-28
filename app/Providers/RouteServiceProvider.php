@@ -24,6 +24,13 @@ class RouteServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Configuration du préfixe des routes API
+        Route::prefix('dieng')->group(function () {
+            Route::middleware('api')
+                ->prefix('v1')
+                ->group(base_path('routes/api.php'));
+        });
+
         RateLimiter::for('api', function (Request $request) {
             return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
         });
