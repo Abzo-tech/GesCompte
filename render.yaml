@@ -62,8 +62,6 @@ services:
         value: neondb_owner
       - key: DB_PASSWORD
         value: npg_3iwEKqIn0oRy # IMPORTANT: Changez ce mot de passe sur Neon.tech dès que possible
-      - key: DB_SSLMODE
-        value: require
       # Variables pour la documentation Swagger en production
       - key: L5_SWAGGER_CONST_HOST
         generateValue: "https://gescompte-1.onrender.com"
