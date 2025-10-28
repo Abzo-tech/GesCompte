@@ -10,8 +10,19 @@ services:
       php artisan config:clear
       php artisan config:cache
       
-      # Force la génération de la clé d'application
-      php -r "file_put_contents('.env', 'APP_KEY=' . 'base64:' . base64_encode(random_bytes(32)) . PHP_EOL, FILE_APPEND);"
+      # Création du fichier .env s'il n'existe pas
+      if [ ! -f ".env" ]; then
+        cp .env.example .env
+      fi
+
+      # Génération de la clé d'application
+      php -r "\$envFile = '.env'; \
+        \$key = 'base64:' . base64_encode(random_bytes(32)); \
+        \$content = file_get_contents(\$envFile); \
+        \$content = preg_replace('/^APP_KEY=.*/m', 'APP_KEY=' . \$key, \$content); \
+        file_put_contents(\$envFile, \$content);"
+      
+      # Configuration de l'application
       php artisan config:clear
       php artisan config:cache
       
@@ -23,8 +34,8 @@ services:
 
       # Configuration et génération de la documentation Swagger
       if [ -f "vendor/darkaonline/l5-swagger/src/helpers.php" ]; then
-        php artisan vendor:publish --provider "L5Swagger\L5SwaggerServiceProvider"
-        php artisan l5-swagger:generate || echo "Warning: Swagger generation failed but continuing..."
+        php artisan vendor:publish --provider="L5Swagger\L5SwaggerServiceProvider" --tag=config
+        php artisan l5-swagger:generate --all || echo "Warning: Swagger generation failed but continuing..."
       else
         echo "Warning: L5-Swagger package not found, skipping Swagger generation"
       fi
