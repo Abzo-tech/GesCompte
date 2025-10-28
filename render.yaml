@@ -17,16 +17,23 @@ services:
 
       # La clé d'application (APP_KEY) est gérée par Render via les envVars, donc pas besoin de la générer ici.
 
-      # 2. Exécution des migrations. Laravel lira maintenant les variables d'environnement directement.
+      # 2. Attendre que la base de données Neon soit prête.
+      # Ce script va essayer de se connecter toutes les 5 secondes, jusqu'à 12 fois (total 60 secondes).
+      until php -r "try { new PDO(\"pgsql:host=$DB_HOST;port=$DB_PORT;dbname=$DB_DATABASE\", \"$DB_USERNAME\", \"$DB_PASSWORD\"); } catch (Exception \$e) { exit(1); }"; do
+          echo "La base de données est en sommeil, nouvelle tentative dans 5 secondes...";
+          sleep 5;
+      done
+
+      # 3. Exécution des migrations une fois que la base de données est disponible.
       # Le flag --force est nécessaire pour l'exécution en mode non-interactif (production)
       php artisan migrate --force --seed
 
-      # 3. Mise en cache de la configuration et des routes pour la production
+      # 4. Mise en cache de la configuration et des routes pour la production
       php artisan config:cache
       php artisan route:cache
       php artisan view:cache
 
-      # 4. Génération de la documentation Swagger
+      # 5. Génération de la documentation Swagger
       if [ -f "vendor/darkaonline/l5-swagger/src/helpers.php" ]; then
         php artisan l5-swagger:generate --all || echo "Warning: Swagger generation failed but continuing..."
       else
