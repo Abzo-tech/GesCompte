@@ -7,15 +7,11 @@ services:
       # Installation des dépendances
       composer install --no-interaction --optimize-autoloader --no-dev
 
-      
       # Création du fichier .env s'il n'existe pas
       if [ ! -f ".env" ]; then
         cp .env.example .env
       fi
       if [ ! -f ".env" ]; then cp .env.example .env; fi
-      # La clé d'application (APP_KEY) est gérée par Render via les envVars, donc pas besoin de la générer ici.
-      # Si APP_KEY n'était pas gérée par Render, la commande suivante serait nécessaire:
-      # # php artisan key:generate --force
 
       # Génération de la clé d'application
       php -r "\$envFile = '.env'; \
@@ -23,6 +19,8 @@ services:
         \$content = file_get_contents(\$envFile); \
         \$content = preg_replace('/^APP_KEY=.*/m', 'APP_KEY=' . \$key, \$content); \
         file_put_contents(\$envFile, \$content);"
+      # La clé d'application (APP_KEY) est gérée par Render via les envVars, donc pas besoin de la générer ici.
+      # La commande "php artisan key:generate --force" est donc inutile ici.
 
       # Exécution des migrations pour créer les tables AVANT la mise en cache
       php artisan migrate --force
@@ -42,7 +40,6 @@ services:
       # Configuration et génération de la documentation Swagger
       if [ -f "vendor/darkaonline/l5-swagger/src/helpers.php" ]; then
         php artisan vendor:publish --provider="L5Swagger\L5SwaggerServiceProvider" --tag=config
-        php artisan vendor:publish --provider="L5Swagger\L5SwaggerServiceProvider" --tag=config --force # Publie la configuration Swagger
         php artisan l5-swagger:generate --all || echo "Warning: Swagger generation failed but continuing..."
       else
         echo "Warning: L5-Swagger package not found, skipping Swagger generation"
@@ -61,6 +58,7 @@ services:
           key: APP_KEY
       - key: DB_CONNECTION
         value: pgsql
+          name: app # Assurez-vous que ce service s'appelle bien 'app' dans Render
       - key: DB_HOST
         fromDatabase:
           name: postgres
