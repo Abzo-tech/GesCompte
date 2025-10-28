@@ -53,7 +53,7 @@ services:
       - key: DB_CONNECTION
         value: pgsql
       - key: DB_HOST
-        value: ep-frosty-feather-adpxmgqm-pooler.c-2.us-east-1.aws.neon.tech
+        value: ep-misty-bar-a4j2hw28-pooler.us-east-1.aws.neon.tech
       - key: DB_PORT
         value: 5432
       - key: DB_DATABASE
@@ -61,7 +61,7 @@ services:
       - key: DB_USERNAME
         value: neondb_owner
       - key: DB_PASSWORD
-        value: npg_3iwEKqIn0oRy # IMPORTANT: Changez ce mot de passe sur Neon.tech dès que possible
+        value: npg_5Csd3MhOpWfT # IMPORTANT: Changez ce mot de passe sur Neon.tech dès que possible
       # Variables pour la documentation Swagger en production
       - key: L5_SWAGGER_CONST_HOST
         generateValue: "https://gescompte-1.onrender.com"
@@ -76,3 +76,4 @@ services:
 
 
 
+postgresql://neondb_owner:npg_5Csd3MhOpWfT@ep-misty-bar-a4j2hw28-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
