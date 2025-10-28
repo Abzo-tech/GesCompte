@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('numero');
             $table->string('type');
             $table->string('statut')->default('actif');
-            $table->string('client_id')->nullable();
+            $table->string('client_id');
             $table->string('devise', 4)->default('FCFA');
             $table->dateTime('date_creation');
             $table->softDeletes();

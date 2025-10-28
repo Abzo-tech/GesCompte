@@ -13,21 +13,14 @@ return new class extends Migration
     {
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
-            $table->string('reference', 50)->unique();
-            $table->foreignId('compte_id')->constrained()->onDelete('cascade');
+            $table->string('reference', 50);
+            $table->string('compte_id');
             $table->enum('type', ['depot', 'retrait', 'virement', 'paiement'])->default('depot');
             $table->decimal('montant', 15, 2);
             $table->text('description')->nullable();
             $table->string('beneficiaire')->nullable();
             $table->timestamp('date_transaction');
             $table->timestamps();
-
-            $table->index(['reference']);
-            $table->index(['compte_id']);
-            $table->index(['type']);
-            $table->index(['date_transaction']);
-            $table->index(['compte_id', 'type']);
-            $table->index(['date_transaction', 'type']);
         });
     }
 
