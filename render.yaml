@@ -42,26 +42,22 @@ services:
       - key: APP_KEY
         fromDatabase:
           name: app # Assurez-vous que ce service s'appelle bien 'app' dans Render
+      # Variables pour la base de données de production (Neon)
+      - key: DB_CONNECTION
+        value: pgsql
       - key: DB_HOST
-        fromDatabase:
-          name: postgres
-          property: hostname
+        value: ep-frosty-feather-adpxmgqm-pooler.c-2.us-east-1.aws.neon.tech
       - key: DB_PORT
-        fromDatabase:
-          name: postgres
-          property: port
+        value: 5432
       - key: DB_DATABASE
-        fromDatabase:
-          name: postgres
-          property: database
+        value: neondb
       - key: DB_USERNAME
-        fromDatabase:
-          name: postgres
-          property: user
+        value: neondb_owner
       - key: DB_PASSWORD
-        fromDatabase:
-          name: postgres
-          property: password
+        value: npg_3iwEKqIn0oRy # IMPORTANT: Changez ce mot de passe sur Neon.tech dès que possible
+      - key: DB_SSLMODE
+        value: require
+      # Variables pour la documentation Swagger en production
       - key: L5_SWAGGER_CONST_HOST
         generateValue: "https://gescompte-1.onrender.com"
       - key: L5_SWAGGER_CONST_HTTPS
@@ -70,5 +66,3 @@ services:
         value: "true"
       - key: L5_SWAGGER_GENERATE_HTML
         value: "true"
-      - key: L5_SWAGGER_UI_DISPLAY_OAUTH_REDIRECT
-        value: "false"
