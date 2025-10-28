@@ -75,9 +75,9 @@ return [
             'prefix' => '',
             'prefix_indexes' => true,
             'search_path' => 'public',
-            'sslmode' => env('DB_SSLMODE', 'prefer'), // Lit la variable d'environnement, 'prefer' par défaut
+            'sslmode' => env('DB_SSLMODE', 'require'), // Forcé à 'require' pour Neon
             'options' => [
-                PDO::ATTR_TIMEOUT => env('DB_CONNECTION_TIMEOUT', 30), // Timeout de connexion en secondes
+                PDO::ATTR_TIMEOUT => env('DB_CONNECTION_TIMEOUT', 60), // Timeout de connexion en secondes
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             ],
         ],

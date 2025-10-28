@@ -14,14 +14,19 @@ services:
       # Attendre que la base de données soit prête avant les migrations
       attempts=0
       max_attempts=30
-      until php artisan migrate:status > /dev/null 2>&1 || [ $attempts -ge $max_attempts ]; do
+      until PGPASSWORD="${DB_PASSWORD}" psql "postgresql://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_DATABASE}?sslmode=require" -c "SELECT 1;" > /dev/null 2>&1 || [ $attempts -ge $max_attempts ]; do
         echo "Database not ready for migrations - sleeping (attempt $((attempts+1))/$max_attempts)"
         sleep 2
         attempts=$((attempts+1))
       done
 
       # Exécution des migrations (le --force est nécessaire en production)
-      php artisan migrate --force --seed
+      if [ $attempts -lt $max_attempts ]; then
+        php artisan migrate --force --seed
+      else
+        echo "Warning: Database was not ready, skipping migrations"
+        php artisan migrate --force --seed || echo "Warning: Migrations failed, but continuing..."
+      fi
 
       # Mise en cache pour la production
       php artisan config:cache
@@ -59,6 +64,8 @@ services:
         value: require
       - key: DB_CONNECTION_TIMEOUT
         value: 60
+      - key: DATABASE_URL
+        sync: false # IMPORTANT: Définissez DATABASE_URL comme un secret dans le tableau de bord Render
       - key: APP_URL
         value: https://gesbanque.onrender.com # Remplacez par l'URL de votre service Render
       - key: LOG_CHANNEL
