@@ -3,11 +3,31 @@ services:
     name: gescompte
     env: php
     buildCommand: |
+      # Installation des dépendances
       composer install --no-interaction --optimize-autoloader --no-dev
+      
+      # Configuration de l'application
+      php artisan config:clear
       php artisan config:cache
+      
+      # Génération de la clé d'application si elle n'existe pas
+      if [ -z "$APP_KEY" ]; then
+        php artisan key:generate --force
+      fi
+      
+      # Optimisation des routes et vues
+      php artisan route:clear
       php artisan route:cache
+      php artisan view:clear
       php artisan view:cache
-      php artisan l5-swagger:generate || true
+
+      php artisan l5-swagger:publish
+      php artisan l5-swagger:generate
+      
+      # Génération de la documentation Swagger (si le package est installé)
+      if [ -f "vendor/darkaonline/l5-swagger/bin/generate" ]; then
+        php artisan l5-swagger:generate || true
+      fi
     startCommand: >
       php artisan serve --host=0.0.0.0 --port=$PORT
     envVars:
