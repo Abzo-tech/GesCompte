@@ -1,55 +1,39 @@
 services:
   - type: web
-    region: frankfurt # Optionnel: choisissez la région la plus proche de vos utilisateurs
-    name: gescompte
+    name: gesbanque # Nom du service
     env: php
     buildCommand: |
       # Installation des dépendances
       composer install --no-interaction --optimize-autoloader --no-dev
 
-      # 1. Effacer tous les caches pour garantir une configuration fraîche
+      # Effacer les anciens caches pour éviter les conflits
       php artisan config:clear
       php artisan route:clear
       php artisan view:clear
 
-      # Création du fichier .env s'il n'existe pas
-      if [ ! -f ".env" ]; then cp .env.example .env; fi
-
-      # La clé d'application (APP_KEY) est gérée par Render via les envVars, donc pas besoin de la générer ici.
-
-      # 2. Attendre que la base de données Neon soit prête.
-      # Ce script va essayer de se connecter toutes les 5 secondes, jusqu'à 12 fois (total 60 secondes).
-      until php -r '$host=getenv("DB_HOST"); $port=getenv("DB_PORT"); $db=getenv("DB_DATABASE"); $user=getenv("DB_USERNAME"); $pass=getenv("DB_PASSWORD"); try { new PDO("pgsql:host=$host;port=$port;dbname=$db;sslmode=require", $user, $pass); } catch (Exception $e) { exit(1); }'; do
-          echo "La base de données est en sommeil, nouvelle tentative dans 5 secondes...";
-          sleep 5;
-      done
-
-      # 3. Exécution des migrations une fois que la base de données est disponible.
-      # Le flag --force est nécessaire pour l'exécution en mode non-interactif (production)
+      # Exécution des migrations (le --force est nécessaire en production)
       php artisan migrate --force --seed
 
-      # 4. Mise en cache de la configuration et des routes pour la production
+      # Mise en cache pour la production
       php artisan config:cache
       php artisan route:cache
       php artisan view:cache
 
-      # 5. Génération de la documentation Swagger
+      # Génération de la documentation Swagger
       if [ -f "vendor/darkaonline/l5-swagger/src/helpers.php" ]; then
         php artisan l5-swagger:generate --all || echo "Warning: Swagger generation failed but continuing..."
       else
         echo "Warning: L5-Swagger package not found, skipping Swagger generation"
       fi
     startCommand: >
-      /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisor.conf
+      php artisan serve --host=0.0.0.0 --port=${PORT}
     envVars:
       - key: APP_ENV
         value: production
       - key: APP_DEBUG
-        value: false
+        value: "true" # Temporairement à "true" pour voir les erreurs détaillées
       - key: APP_KEY
-        fromDatabase:
-          name: app # Assurez-vous que ce service s'appelle bien 'app' dans Render
-      # Variables pour la base de données de production (Neon)
+        sync: false # IMPORTANT: Définissez APP_KEY comme un secret dans le tableau de bord Render
       - key: DB_CONNECTION
         value: pgsql
       - key: DB_HOST
@@ -61,19 +45,10 @@ services:
       - key: DB_USERNAME
         value: neondb_owner
       - key: DB_PASSWORD
-        value: npg_5Csd3MhOpWfT # IMPORTANT: Changez ce mot de passe sur Neon.tech dès que possible
-      # Variables pour la documentation Swagger en production
-      - key: L5_SWAGGER_CONST_HOST
-        generateValue: "https://gescompte-1.onrender.com"
-      - key: L5_SWAGGER_CONST_HTTPS
-        value: "true"
-      - key: L5_SWAGGER_GENERATE_ALWAYS
-        value: "true"
-      - key: L5_SWAGGER_GENERATE_HTML
-        value: "true"
-
-
-
-
-
-postgresql://neondb_owner:npg_5Csd3MhOpWfT@ep-misty-bar-a4j2hw28-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+        sync: false # IMPORTANT: Définissez DB_PASSWORD comme un secret dans le tableau de bord Render
+      - key: DB_SSLMODE
+        value: require
+      - key: APP_URL
+        value: https://gesbanque.onrender.com # Remplacez par l'URL de votre service Render
+      - key: LOG_CHANNEL
+        value: stderr
