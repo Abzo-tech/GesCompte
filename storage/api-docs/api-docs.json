@@ -19,7 +19,7 @@
             "description": "Serveur de développement local"
         },
         {
-            "url": "/dieng/v1"
+            "url": "dieng"
         }
     ],
     "paths": {
@@ -260,7 +260,7 @@
                     {
                         "name": "type",
                         "in": "query",
-                        "description": "Filtrer par type de compte",
+                        "description": "Filtrer par type de compte (courant, epargne, cheque)",
                         "schema": {
                             "type": "string",
                             "enum": [
@@ -273,7 +273,7 @@
                     {
                         "name": "statut",
                         "in": "query",
-                        "description": "Filtrer par statut",
+                        "description": "Filtrer par statut (actif, bloque, ferme)",
                         "schema": {
                             "type": "string",
                             "enum": [
@@ -284,9 +284,61 @@
                         }
                     },
                     {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Recherche par numéro de compte ou nom/prénom du client",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "client_id",
+                        "in": "query",
+                        "description": "Filtrer par identifiant du client (UUID)",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "client_phone",
+                        "in": "query",
+                        "description": "Filtrer par numéro de téléphone du client",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Champ de tri (dateCreation, solde, titulaire)",
+                        "schema": {
+                            "type": "string",
+                            "default": "dateCreation",
+                            "enum": [
+                                "dateCreation",
+                                "solde",
+                                "titulaire"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "order",
+                        "in": "query",
+                        "description": "Ordre de tri (asc, desc)",
+                        "schema": {
+                            "type": "string",
+                            "default": "asc",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ]
+                        }
+                    },
+                    {
                         "name": "limit",
                         "in": "query",
-                        "description": "Nombre d'éléments par page",
+                        "description": "Nombre d'éléments par page (1-100)",
                         "schema": {
                             "type": "integer",
                             "default": 10,
@@ -297,23 +349,50 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Liste des comptes",
+                        "description": "Liste des comptes récupérée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CompteApiCollection"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Requête invalide",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/Compte"
-                                            }
-                                        },
-                                        "pagination": {
-                                            "$ref": "#/components/schemas/Pagination"
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Trop de requêtes",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Too Many Attempts."
                                         }
                                     },
                                     "type": "object"
@@ -321,7 +400,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             },
             "post": {
                 "tags": [
@@ -334,7 +418,49 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/CompteRequest"
+                                "properties": {
+                                    "numero": {
+                                        "description": "Numéro du compte",
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "type": {
+                                        "description": "Type de compte",
+                                        "type": "string",
+                                        "enum": [
+                                            "courant",
+                                            "epargne",
+                                            "cheque"
+                                        ]
+                                    },
+                                    "statut": {
+                                        "description": "Statut du compte",
+                                        "type": "string",
+                                        "enum": [
+                                            "actif",
+                                            "bloque",
+                                            "ferme"
+                                        ],
+                                        "nullable": true
+                                    },
+                                    "client_id": {
+                                        "description": "ID du client",
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                    },
+                                    "devise": {
+                                        "description": "Devise du compte",
+                                        "type": "string",
+                                        "maxLength": 4
+                                    },
+                                    "date_creation": {
+                                        "description": "Date de création",
+                                        "type": "string",
+                                        "format": "date-time"
+                                    }
+                                },
+                                "type": "object"
                             }
                         }
                     }
@@ -410,7 +536,49 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/CompteRequest"
+                                "properties": {
+                                    "numero": {
+                                        "description": "Numéro du compte",
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "type": {
+                                        "description": "Type de compte",
+                                        "type": "string",
+                                        "enum": [
+                                            "courant",
+                                            "epargne",
+                                            "cheque"
+                                        ]
+                                    },
+                                    "statut": {
+                                        "description": "Statut du compte",
+                                        "type": "string",
+                                        "enum": [
+                                            "actif",
+                                            "bloque",
+                                            "ferme"
+                                        ],
+                                        "nullable": true
+                                    },
+                                    "client_id": {
+                                        "description": "ID du client",
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                    },
+                                    "devise": {
+                                        "description": "Devise du compte",
+                                        "type": "string",
+                                        "maxLength": 4
+                                    },
+                                    "date_creation": {
+                                        "description": "Date de création",
+                                        "type": "string",
+                                        "format": "date-time"
+                                    }
+                                },
+                                "type": "object"
                             }
                         }
                     }
@@ -468,7 +636,7 @@
                     {
                         "name": "type",
                         "in": "query",
-                        "description": "Filtrer par type de compte",
+                        "description": "Filtrer par type de compte (courant, epargne, cheque)",
                         "schema": {
                             "type": "string",
                             "enum": [
@@ -479,9 +647,44 @@
                         }
                     },
                     {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Recherche par numéro de compte ou nom/prénom du client",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Champ de tri (dateCreation, solde, titulaire)",
+                        "schema": {
+                            "type": "string",
+                            "default": "dateCreation",
+                            "enum": [
+                                "dateCreation",
+                                "solde",
+                                "titulaire"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "order",
+                        "in": "query",
+                        "description": "Ordre de tri (asc, desc)",
+                        "schema": {
+                            "type": "string",
+                            "default": "asc",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ]
+                        }
+                    },
+                    {
                         "name": "limit",
                         "in": "query",
-                        "description": "Nombre d'éléments par page",
+                        "description": "Nombre d'éléments par page (1-100)",
                         "schema": {
                             "type": "integer",
                             "default": 10,
@@ -492,23 +695,50 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Liste des comptes archivés",
+                        "description": "Liste des comptes archivés récupérée avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CompteApiCollection"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Requête invalide",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non authentifié",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/Compte"
-                                            }
-                                        },
-                                        "pagination": {
-                                            "$ref": "#/components/schemas/Pagination"
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Trop de requêtes",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Too Many Attempts."
                                         }
                                     },
                                     "type": "object"
@@ -516,7 +746,12 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/dieng/v1/comptes/{id}/restore": {
@@ -907,11 +1142,6 @@
                         "type": "integer",
                         "example": 1
                     },
-                    "numero": {
-                        "description": "Numéro unique du compte",
-                        "type": "string",
-                        "example": "CMPT2025001"
-                    },
                     "type": {
                         "description": "Type de compte",
                         "type": "string",
@@ -952,7 +1182,7 @@
                         "example": "2025-01-01T00:00:00Z"
                     },
                     "deleted_at": {
-                        "description": "Date d'archivage",
+                        "description": "Date d'archivage (soft delete)",
                         "type": "string",
                         "format": "date-time",
                         "nullable": true
@@ -970,23 +1200,28 @@
                 },
                 "type": "object"
             },
-            "CompteRequest": {
-                "title": "CompteRequest",
-                "description": "Données pour créer ou modifier un compte",
-                "required": [
-                    "type",
-                    "devise",
-                    "date_creation"
-                ],
+            "CompteApi": {
+                "title": "CompteApi",
+                "description": "Représente un compte bancaire dans l'API (format camelCase)",
                 "properties": {
-                    "numero": {
-                        "description": "Numéro du compte (auto-généré si non fourni)",
+                    "id": {
+                        "description": "Identifiant unique du compte",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "numeroCompte": {
+                        "description": "Numéro unique du compte",
                         "type": "string",
-                        "example": "CMPT2025TEST001",
+                        "example": "CMPT2025001"
+                    },
+                    "titulaire": {
+                        "description": "Nom complet du titulaire du compte",
+                        "type": "string",
+                        "example": "Jean Dupont",
                         "nullable": true
                     },
                     "type": {
-                        "description": "Type de compte (requis)",
+                        "description": "Type de compte",
                         "type": "string",
                         "enum": [
                             "courant",
@@ -995,8 +1230,26 @@
                         ],
                         "example": "courant"
                     },
+                    "solde": {
+                        "description": "Solde actuel du compte",
+                        "type": "number",
+                        "format": "float",
+                        "example": 1250000
+                    },
+                    "devise": {
+                        "description": "Devise du compte",
+                        "type": "string",
+                        "maxLength": 4,
+                        "example": "FCFA"
+                    },
+                    "dateCreation": {
+                        "description": "Date de création du compte",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-01-01T00:00:00Z"
+                    },
                     "statut": {
-                        "description": "Statut du compte (par défaut: actif)",
+                        "description": "Statut du compte",
                         "type": "string",
                         "enum": [
                             "actif",
@@ -1005,24 +1258,73 @@
                         ],
                         "example": "actif"
                     },
-                    "client_id": {
-                        "description": "Identifiant du client (optionnel)",
+                    "motifBlocage": {
+                        "description": "Raison du blocage si le statut est 'bloque'",
                         "type": "string",
-                        "format": "uuid",
-                        "example": "550e8400-e29b-41d4-a716-446655440000",
+                        "example": "Inactivité de 30+ jours",
                         "nullable": true
                     },
-                    "devise": {
-                        "description": "Devise du compte (requis, par défaut: FCFA)",
-                        "type": "string",
-                        "maxLength": 4,
-                        "example": "FCFA"
+                    "metadata": {
+                        "properties": {
+                            "derniereModification": {
+                                "type": "string",
+                                "format": "date-time",
+                                "example": "2023-06-10T14:30:00Z"
+                            },
+                            "version": {
+                                "type": "integer",
+                                "example": 1
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "CompteApiCollection": {
+                "title": "CompteApiCollection",
+                "description": "Collection de comptes avec pagination",
+                "properties": {
+                    "success": {
+                        "description": "Indique le succès de la requête",
+                        "type": "boolean",
+                        "example": true
                     },
-                    "date_creation": {
-                        "description": "Date de création du compte (requis)",
-                        "type": "string",
-                        "format": "date-time",
-                        "example": "2025-01-01T00:00:00Z"
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CompteApi"
+                        }
+                    },
+                    "pagination": {
+                        "$ref": "#/components/schemas/Pagination"
+                    },
+                    "links": {
+                        "properties": {
+                            "self": {
+                                "type": "string",
+                                "example": "http://api.example.com/api/v1/comptes?page=1"
+                            },
+                            "next": {
+                                "type": "string",
+                                "example": "http://api.example.com/api/v1/comptes?page=2",
+                                "nullable": true
+                            },
+                            "previous": {
+                                "type": "string",
+                                "example": null,
+                                "nullable": true
+                            },
+                            "first": {
+                                "type": "string",
+                                "example": "http://api.example.com/api/v1/comptes?page=1"
+                            },
+                            "last": {
+                                "type": "string",
+                                "example": "http://api.example.com/api/v1/comptes?page=3"
+                            }
+                        },
+                        "type": "object"
                     }
                 },
                 "type": "object"

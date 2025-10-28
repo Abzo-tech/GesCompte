@@ -51,6 +51,7 @@ return [
                  */
                 'annotations' => [
                 base_path('app/Http/Controllers'),
+                base_path('app/Http/Controllers/Api/V1/SchemaDefinitions.php'),
             ]
             ],
         ],

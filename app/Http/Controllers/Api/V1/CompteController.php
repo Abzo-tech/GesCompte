@@ -9,6 +9,20 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
 /**
+ * @OA\Schema(
+ *     schema="CompteRequest",
+ *     title="Compte Request",
+ *     description="Compte creation/update request",
+ *     @OA\Property(property="numero", type="string", nullable=true, description="Numéro du compte"),
+ *     @OA\Property(property="type", type="string", enum={"courant","epargne","cheque"}, description="Type de compte"),
+ *     @OA\Property(property="statut", type="string", enum={"actif","bloque","ferme"}, nullable=true, description="Statut du compte"),
+ *     @OA\Property(property="client_id", type="string", format="uuid", nullable=true, description="ID du client"),
+ *     @OA\Property(property="devise", type="string", maxLength=4, description="Devise du compte"),
+ *     @OA\Property(property="date_creation", type="string", format="date-time", description="Date de création")
+ * )
+ */
+
+/**
  * Définitions des schémas déplacées dans SchemaDefinitions.php
  */
 
@@ -195,7 +209,14 @@ class CompteController extends Controller
      *     tags={"Comptes"},
      *     @OA\RequestBody(
      *         required=true,
-     *         @OA\JsonContent(ref="#/components/schemas/CompteRequest")
+     *         @OA\JsonContent(
+     *             @OA\Property(property="numero", type="string", nullable=true, description="Numéro du compte"),
+     *             @OA\Property(property="type", type="string", enum={"courant","epargne","cheque"}, description="Type de compte"),
+     *             @OA\Property(property="statut", type="string", enum={"actif","bloque","ferme"}, nullable=true, description="Statut du compte"),
+     *             @OA\Property(property="client_id", type="string", format="uuid", nullable=true, description="ID du client"),
+     *             @OA\Property(property="devise", type="string", maxLength=4, description="Devise du compte"),
+     *             @OA\Property(property="date_creation", type="string", format="date-time", description="Date de création")
+     *         )
      *     ),
      *     @OA\Response(
      *         response=201,
@@ -316,7 +337,14 @@ class CompteController extends Controller
      *     ),
      *     @OA\RequestBody(
      *         required=true,
-     *         @OA\JsonContent(ref="#/components/schemas/CompteRequest")
+     *         @OA\JsonContent(
+     *             @OA\Property(property="numero", type="string", nullable=true, description="Numéro du compte"),
+     *             @OA\Property(property="type", type="string", enum={"courant","epargne","cheque"}, description="Type de compte"),
+     *             @OA\Property(property="statut", type="string", enum={"actif","bloque","ferme"}, nullable=true, description="Statut du compte"),
+     *             @OA\Property(property="client_id", type="string", format="uuid", nullable=true, description="ID du client"),
+     *             @OA\Property(property="devise", type="string", maxLength=4, description="Devise du compte"),
+     *             @OA\Property(property="date_creation", type="string", format="date-time", description="Date de création")
+     *         )
      *     ),
      *     @OA\Response(
      *         response=200,
