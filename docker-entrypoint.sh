@@ -11,6 +11,9 @@ else
     echo "pg_isready not found, skipping database check"
 fi
 
+# Exécuter les migrations de base de données
+php artisan migrate --force
+
 # Générer la clé d'application si absente
 php artisan key:generate --force
 
