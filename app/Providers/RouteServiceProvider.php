@@ -24,13 +24,6 @@ class RouteServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Configuration du préfixe des routes API
-        Route::prefix('dieng')->group(function () {
-            Route::middleware('api')
-                ->prefix('v1')
-                ->group(base_path('routes/api.php'));
-        });
-
         RateLimiter::for('api', function (Request $request) {
             return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
         });
@@ -39,9 +32,9 @@ class RouteServiceProvider extends ServiceProvider
             Route::middleware('web')
                 ->group(base_path('routes/web.php'));
 
-            // Routes API sans aucun middleware
-            Route::middleware([])
-                ->prefix('dieng')
+            // Routes API with standard 'api' prefix
+            Route::middleware('api')
+                ->prefix('api')
                 ->group(base_path('routes/api.php'));
         });
     }

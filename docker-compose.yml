@@ -4,12 +4,18 @@ services:
   app:
     build: .
     ports:
-      - "8000:8000"
+      - "8010:8000"
     env_file:
       - .env
     environment:
-      - APP_ENV=production
-      - APP_DEBUG=false
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - DB_CONNECTION=pgsql
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_DATABASE=laravel
+      - DB_USERNAME=laravel
+      - DB_PASSWORD=password
     depends_on:
       - db
 
@@ -20,7 +26,7 @@ services:
       POSTGRES_USER: laravel
       POSTGRES_PASSWORD: password
     ports:
-      - "5432:5432"
+      - "5441:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 

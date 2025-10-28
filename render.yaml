@@ -32,6 +32,9 @@ services:
       php artisan view:clear
       php artisan view:cache
 
+      # Exécution des migrations pour créer les tables
+      php artisan migrate --force
+
       # Configuration et génération de la documentation Swagger
       if [ -f "vendor/darkaonline/l5-swagger/src/helpers.php" ]; then
         php artisan vendor:publish --provider="L5Swagger\L5SwaggerServiceProvider" --tag=config
