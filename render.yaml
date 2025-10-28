@@ -10,10 +10,10 @@ services:
       php artisan config:clear
       php artisan config:cache
       
-      # Génération de la clé d'application si elle n'existe pas
-      if [ -z "$APP_KEY" ]; then
-        php artisan key:generate --force
-      fi
+      # Force la génération de la clé d'application
+      php -r "file_put_contents('.env', 'APP_KEY=' . 'base64:' . base64_encode(random_bytes(32)) . PHP_EOL, FILE_APPEND);"
+      php artisan config:clear
+      php artisan config:cache
       
       # Optimisation des routes et vues
       php artisan route:clear
@@ -21,12 +21,12 @@ services:
       php artisan view:clear
       php artisan view:cache
 
-      php artisan l5-swagger:publish
-      php artisan l5-swagger:generate
-      
-      # Génération de la documentation Swagger (si le package est installé)
-      if [ -f "vendor/darkaonline/l5-swagger/bin/generate" ]; then
-        php artisan l5-swagger:generate || true
+      # Configuration et génération de la documentation Swagger
+      if [ -f "vendor/darkaonline/l5-swagger/src/helpers.php" ]; then
+        php artisan vendor:publish --provider "L5Swagger\L5SwaggerServiceProvider"
+        php artisan l5-swagger:generate || echo "Warning: Swagger generation failed but continuing..."
+      else
+        echo "Warning: L5-Swagger package not found, skipping Swagger generation"
       fi
     startCommand: >
       php artisan serve --host=0.0.0.0 --port=$PORT
