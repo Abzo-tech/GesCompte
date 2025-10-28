@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('comptes', function (Blueprint $table) {
             $table->id();
-            $table->string('numero')->unique();
+            $table->string('numero');
             $table->string('type');
             $table->string('statut')->default('actif');
             $table->string('client_id')->nullable();
@@ -21,12 +21,6 @@ return new class extends Migration
             $table->dateTime('date_creation');
             $table->softDeletes();
             $table->timestamps();
-
-            // Index pour les performances
-            $table->index(['type']);
-            $table->index(['statut']);
-            $table->index(['client_id']);
-            $table->index(['date_creation']);
         });
     }
 

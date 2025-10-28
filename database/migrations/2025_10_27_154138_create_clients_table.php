@@ -15,16 +15,13 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->string('nom');
             $table->string('prenom');
-            $table->string('email')->unique();
+            $table->string('email');
             $table->string('telephone')->nullable();
             $table->text('adresse')->nullable();
             $table->enum('statut', ['actif', 'inactif', 'suspendu'])->default('actif');
             $table->timestamps();
 
-            // Index optimisés pour les performances
-            $table->index(['statut']);
-            $table->index(['nom', 'prenom']);
-            $table->index(['created_at']);
+
         });
     }
 
