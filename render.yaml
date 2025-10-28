@@ -1,0 +1,53 @@
+services:
+  - type: web
+    name: gescompte
+    env: php
+    buildCommand: |
+      composer install --no-interaction --optimize-autoloader --no-dev
+      php artisan config:cache
+      php artisan route:cache
+      php artisan view:cache
+      php artisan l5-swagger:generate
+    startCommand: >
+      php artisan serve --host=0.0.0.0 --port=$PORT
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: APP_KEY
+        fromDatabase:
+          name: app
+          key: APP_KEY
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        fromDatabase:
+          name: postgres
+          property: hostname
+      - key: DB_PORT
+        fromDatabase:
+          name: postgres
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: postgres
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: postgres
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: postgres
+          property: password
+      - key: L5_SWAGGER_CONST_HOST
+        generateValue: "https://gescompte-1.onrender.com"
+      - key: L5_SWAGGER_CONST_HTTPS
+        value: "true"
+      - key: L5_SWAGGER_GENERATE_ALWAYS
+        value: "true"
+      - key: L5_SWAGGER_GENERATE_HTML
+        value: "true"
+      - key: L5_SWAGGER_UI_DISPLAY_OAUTH_REDIRECT
+        value: "false"
