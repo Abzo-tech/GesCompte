@@ -13,22 +13,20 @@ return new class extends Migration
     {
         Schema::create('comptes', function (Blueprint $table) {
             $table->id();
-            $table->string('numero', 20)->unique();
-            $table->enum('type', ['epargne', 'cheque', 'courant'])->default('courant');
-            $table->enum('statut', ['actif', 'bloque', 'ferme'])->default('actif');
-            $table->uuid('client_id'); // Clé étrangère UUID vers clients
+            $table->string('numero')->unique();
+            $table->string('type');
+            $table->string('statut')->default('actif');
+            $table->string('client_id')->nullable();
+            $table->string('devise', 4)->default('FCFA');
+            $table->dateTime('date_creation');
+            $table->softDeletes();
             $table->timestamps();
 
-            // Clé étrangère avec UUID
-            $table->foreign('client_id')->references('id')->on('clients')->onDelete('cascade');
-
-            // Index optimisés
-            $table->index(['numero']);
+            // Index pour les performances
             $table->index(['type']);
             $table->index(['statut']);
             $table->index(['client_id']);
-            $table->index(['type', 'statut']);
-            $table->index(['created_at']);
+            $table->index(['date_creation']);
         });
     }
 

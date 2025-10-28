@@ -13,7 +13,7 @@ class ClientSeeder extends Seeder
      */
     public function run(): void
     {
-        // Création de clients variés pour les tests avec UUID fixes
+        // Création de clients variés pour les tests
         \App\Models\Client::factory(10)->create();
 
         // Création d'un client spécifique pour les tests avec UUID connu

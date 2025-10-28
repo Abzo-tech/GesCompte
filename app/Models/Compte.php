@@ -4,35 +4,50 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Compte extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'numero',
         'type',
         'statut',
-        'client_id'
+        'devise',
+        'date_creation',
+        'motif_blocage',
+        'deleted_at'
     ];
 
-    /**
-     * Génère automatiquement le numéro de compte
-     */
+    protected $casts = [
+        'date_creation' => 'datetime',
+        'deleted_at' => 'datetime',
+    ];
+
     protected static function boot()
     {
         parent::boot();
+
+        // Global scope désactivé car SoftDeletes gère déjà deleted_at
+        // static::addGlobalScope('notDeleted', function (Builder $builder) {
+        //     $builder->whereNull('deleted_at');
+        // });
 
         static::creating(function ($compte) {
             if (empty($compte->numero)) {
                 $compte->numero = static::generateNumero();
             }
+            if (empty($compte->date_creation)) {
+                $compte->date_creation = now();
+            }
+            if (empty($compte->devise)) {
+                $compte->devise = 'FCFA';
+            }
         });
     }
 
-    /**
-     * Génère un numéro de compte unique
-     */
     public static function generateNumero()
     {
         do {
@@ -42,26 +57,29 @@ class Compte extends Model
         return $numero;
     }
 
-    /**
-     * Relation avec le client propriétaire du compte
-     */
     public function client()
     {
         return $this->belongsTo(Client::class);
     }
 
     /**
-     * Relation avec les transactions du compte
+     * Scope local: rechercher un compte par son numéro.
      */
-    public function transactions()
+    public function scopeNumero(Builder $query, string $numero): Builder
     {
-        return $this->hasMany(Transaction::class);
+        return $query->where('numero', $numero);
     }
 
     /**
-     * Calcule le solde du compte dynamiquement
-     * Solde = Total dépôts - Total retraits
+     * Scope local: filtrer les comptes par téléphone du client.
      */
+    public function scopeClient(Builder $query, string $telephone): Builder
+    {
+        return $query->whereHas('client', function (Builder $q) use ($telephone) {
+            $q->where('telephone', $telephone);
+        });
+    }
+
     public function getSoldeAttribute()
     {
         $depots = $this->transactions()

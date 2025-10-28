@@ -9,21 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
 /**
- * @OA\Schema(
- *     schema="Client",
- *     type="object",
- *     title="Client",
- *     description="Représente un client bancaire",
- *     @OA\Property(property="id", type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000"),
- *     @OA\Property(property="nom", type="string", example="Martin"),
- *     @OA\Property(property="prenom", type="string", example="Jean"),
- *     @OA\Property(property="email", type="string", example="jean.martin@example.com"),
- *     @OA\Property(property="telephone", type="string", example="01 23 45 67 89"),
- *     @OA\Property(property="adresse", type="string", example="123 Avenue de la Test"),
- *     @OA\Property(property="statut", type="string", example="actif"),
- *     @OA\Property(property="created_at", type="string", format="date-time"),
- *     @OA\Property(property="updated_at", type="string", format="date-time")
- * )
+ * Définitions des schémas déplacées dans SchemaDefinitions.php
  */
 class ClientController extends Controller
 {

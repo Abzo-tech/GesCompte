@@ -24,6 +24,7 @@ class Client extends Model
      * The attributes that are mass assignable.
      */
     protected $fillable = [
+        'id',
         'nom',
         'prenom',
         'email',

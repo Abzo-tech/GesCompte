@@ -15,6 +15,10 @@
             "description": "Serveur de production"
         },
         {
+            "url": "http://127.0.0.1:9000",
+            "description": "Serveur de développement local"
+        },
+        {
             "url": "/dieng/v1"
         }
     ],
@@ -252,6 +256,45 @@
                 ],
                 "summary": "Lister tous les comptes",
                 "operationId": "87b9b02eb26c1d1247869ae0ed04b310",
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Filtrer par type de compte",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "courant",
+                                "epargne",
+                                "cheque"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "statut",
+                        "in": "query",
+                        "description": "Filtrer par statut",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "actif",
+                                "bloque",
+                                "ferme"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Nombre d'éléments par page",
+                        "schema": {
+                            "type": "integer",
+                            "default": 10,
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Liste des comptes",
@@ -268,6 +311,9 @@
                                             "items": {
                                                 "$ref": "#/components/schemas/Compte"
                                             }
+                                        },
+                                        "pagination": {
+                                            "$ref": "#/components/schemas/Pagination"
                                         }
                                     },
                                     "type": "object"
@@ -288,32 +334,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "required": [
-                                    "type",
-                                    "client_id"
-                                ],
-                                "properties": {
-                                    "type": {
-                                        "type": "string",
-                                        "enum": [
-                                            "epargne",
-                                            "cheque",
-                                            "courant"
-                                        ]
-                                    },
-                                    "statut": {
-                                        "type": "string",
-                                        "enum": [
-                                            "actif",
-                                            "bloque",
-                                            "ferme"
-                                        ]
-                                    },
-                                    "client_id": {
-                                        "type": "integer"
-                                    }
-                                },
-                                "type": "object"
+                                "$ref": "#/components/schemas/CompteRequest"
                             }
                         }
                     }
@@ -328,6 +349,9 @@
                                 }
                             }
                         }
+                    },
+                    "422": {
+                        "description": "Erreurs de validation"
                     }
                 }
             }
@@ -386,25 +410,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "properties": {
-                                    "type": {
-                                        "type": "string",
-                                        "enum": [
-                                            "epargne",
-                                            "cheque",
-                                            "courant"
-                                        ]
-                                    },
-                                    "statut": {
-                                        "type": "string",
-                                        "enum": [
-                                            "actif",
-                                            "bloque",
-                                            "ferme"
-                                        ]
-                                    }
-                                },
-                                "type": "object"
+                                "$ref": "#/components/schemas/CompteRequest"
                             }
                         }
                     }
@@ -419,6 +425,9 @@
                                 }
                             }
                         }
+                    },
+                    "422": {
+                        "description": "Erreurs de validation"
                     }
                 }
             },
@@ -426,7 +435,7 @@
                 "tags": [
                     "Comptes"
                 ],
-                "summary": "Supprimer un compte",
+                "summary": "Supprimer un compte (soft delete)",
                 "operationId": "916274b18e148aa461b6300a034bf48e",
                 "parameters": [
                     {
@@ -439,11 +448,107 @@
                     }
                 ],
                 "responses": {
-                    "204": {
-                        "description": "Compte supprimé"
+                    "200": {
+                        "description": "Compte archivé"
                     },
                     "404": {
                         "description": "Compte non trouvé"
+                    }
+                }
+            }
+        },
+        "/dieng/v1/comptes/archives/list": {
+            "get": {
+                "tags": [
+                    "Comptes"
+                ],
+                "summary": "Lister les comptes archivés",
+                "operationId": "596e99fcf5bade148ec341534487544c",
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Filtrer par type de compte",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "courant",
+                                "epargne",
+                                "cheque"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Nombre d'éléments par page",
+                        "schema": {
+                            "type": "integer",
+                            "default": 10,
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des comptes archivés",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Compte"
+                                            }
+                                        },
+                                        "pagination": {
+                                            "$ref": "#/components/schemas/Pagination"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/dieng/v1/comptes/{id}/restore": {
+            "post": {
+                "tags": [
+                    "Comptes"
+                ],
+                "summary": "Restaurer un compte archivé",
+                "operationId": "30bee412056053881a312ee780cca1a3",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Compte restauré",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Compte"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Compte archivé non trouvé"
                     }
                 }
             }
@@ -671,85 +776,6 @@
     },
     "components": {
         "schemas": {
-            "Client": {
-                "title": "Client",
-                "description": "Représente un client bancaire",
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "example": "550e8400-e29b-41d4-a716-446655440000"
-                    },
-                    "nom": {
-                        "type": "string",
-                        "example": "Martin"
-                    },
-                    "prenom": {
-                        "type": "string",
-                        "example": "Jean"
-                    },
-                    "email": {
-                        "type": "string",
-                        "example": "jean.martin@example.com"
-                    },
-                    "telephone": {
-                        "type": "string",
-                        "example": "01 23 45 67 89"
-                    },
-                    "adresse": {
-                        "type": "string",
-                        "example": "123 Avenue de la Test"
-                    },
-                    "statut": {
-                        "type": "string",
-                        "example": "actif"
-                    },
-                    "created_at": {
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "updated_at": {
-                        "type": "string",
-                        "format": "date-time"
-                    }
-                },
-                "type": "object"
-            },
-            "Compte": {
-                "title": "Compte",
-                "description": "Représente un compte bancaire",
-                "properties": {
-                    "id": {
-                        "type": "integer",
-                        "example": 1
-                    },
-                    "numero": {
-                        "type": "string",
-                        "example": "CMPT2025A1B2C3D4"
-                    },
-                    "type": {
-                        "type": "string",
-                        "example": "epargne"
-                    },
-                    "statut": {
-                        "type": "string",
-                        "example": "actif"
-                    },
-                    "client_id": {
-                        "type": "integer",
-                        "example": 1
-                    },
-                    "created_at": {
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "updated_at": {
-                        "type": "string",
-                        "format": "date-time"
-                    }
-                },
-                "type": "object"
-            },
             "Transaction": {
                 "title": "Transaction",
                 "description": "Représente une transaction bancaire",
@@ -794,6 +820,278 @@
                     "updated_at": {
                         "type": "string",
                         "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Client": {
+                "title": "Client",
+                "description": "Représente un client bancaire",
+                "required": [
+                    "nom",
+                    "prenom",
+                    "email",
+                    "statut"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Identifiant unique du client",
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "550e8400-e29b-41d4-a716-446655440000"
+                    },
+                    "nom": {
+                        "description": "Nom du client",
+                        "type": "string",
+                        "example": "Martin"
+                    },
+                    "prenom": {
+                        "description": "Prénom du client",
+                        "type": "string",
+                        "example": "Jean"
+                    },
+                    "email": {
+                        "description": "Email unique du client",
+                        "type": "string",
+                        "format": "email",
+                        "example": "jean.martin@example.com"
+                    },
+                    "telephone": {
+                        "description": "Numéro de téléphone",
+                        "type": "string",
+                        "example": "01 23 45 67 89",
+                        "nullable": true
+                    },
+                    "adresse": {
+                        "description": "Adresse postale",
+                        "type": "string",
+                        "example": "123 Avenue de la Test",
+                        "nullable": true
+                    },
+                    "statut": {
+                        "description": "Statut du client",
+                        "type": "string",
+                        "enum": [
+                            "actif",
+                            "inactif",
+                            "suspendu"
+                        ],
+                        "example": "actif"
+                    },
+                    "created_at": {
+                        "description": "Date de création",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "description": "Date de dernière modification",
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Compte": {
+                "title": "Compte",
+                "description": "Représente un compte bancaire",
+                "required": [
+                    "numero",
+                    "type",
+                    "statut",
+                    "devise",
+                    "date_creation"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Identifiant unique du compte",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "numero": {
+                        "description": "Numéro unique du compte",
+                        "type": "string",
+                        "example": "CMPT2025001"
+                    },
+                    "type": {
+                        "description": "Type de compte",
+                        "type": "string",
+                        "enum": [
+                            "courant",
+                            "epargne",
+                            "cheque"
+                        ],
+                        "example": "courant"
+                    },
+                    "statut": {
+                        "description": "Statut du compte",
+                        "type": "string",
+                        "enum": [
+                            "actif",
+                            "bloque",
+                            "ferme"
+                        ],
+                        "example": "actif"
+                    },
+                    "client_id": {
+                        "description": "Identifiant du client propriétaire",
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "550e8400-e29b-41d4-a716-446655440000",
+                        "nullable": true
+                    },
+                    "devise": {
+                        "description": "Devise du compte",
+                        "type": "string",
+                        "maxLength": 4,
+                        "example": "FCFA"
+                    },
+                    "date_creation": {
+                        "description": "Date de création du compte",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-01-01T00:00:00Z"
+                    },
+                    "deleted_at": {
+                        "description": "Date d'archivage",
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "description": "Date de création dans le système",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "description": "Date de dernière modification",
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "CompteRequest": {
+                "title": "CompteRequest",
+                "description": "Données pour créer ou modifier un compte",
+                "required": [
+                    "type",
+                    "devise",
+                    "date_creation"
+                ],
+                "properties": {
+                    "numero": {
+                        "description": "Numéro du compte (auto-généré si non fourni)",
+                        "type": "string",
+                        "example": "CMPT2025TEST001",
+                        "nullable": true
+                    },
+                    "type": {
+                        "description": "Type de compte (requis)",
+                        "type": "string",
+                        "enum": [
+                            "courant",
+                            "epargne",
+                            "cheque"
+                        ],
+                        "example": "courant"
+                    },
+                    "statut": {
+                        "description": "Statut du compte (par défaut: actif)",
+                        "type": "string",
+                        "enum": [
+                            "actif",
+                            "bloque",
+                            "ferme"
+                        ],
+                        "example": "actif"
+                    },
+                    "client_id": {
+                        "description": "Identifiant du client (optionnel)",
+                        "type": "string",
+                        "format": "uuid",
+                        "example": "550e8400-e29b-41d4-a716-446655440000",
+                        "nullable": true
+                    },
+                    "devise": {
+                        "description": "Devise du compte (requis, par défaut: FCFA)",
+                        "type": "string",
+                        "maxLength": 4,
+                        "example": "FCFA"
+                    },
+                    "date_creation": {
+                        "description": "Date de création du compte (requis)",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-01-01T00:00:00Z"
+                    }
+                },
+                "type": "object"
+            },
+            "Pagination": {
+                "title": "Pagination",
+                "description": "Informations de pagination",
+                "properties": {
+                    "currentPage": {
+                        "description": "Page actuelle",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "totalPages": {
+                        "description": "Nombre total de pages",
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "totalItems": {
+                        "description": "Nombre total d'éléments",
+                        "type": "integer",
+                        "example": 25
+                    },
+                    "itemsPerPage": {
+                        "description": "Nombre d'éléments par page",
+                        "type": "integer",
+                        "example": 10
+                    },
+                    "hasNext": {
+                        "description": "Page suivante disponible",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "hasPrevious": {
+                        "description": "Page précédente disponible",
+                        "type": "boolean",
+                        "example": false
+                    }
+                },
+                "type": "object"
+            },
+            "ErrorResponse": {
+                "title": "ErrorResponse",
+                "description": "Réponse d'erreur standardisée",
+                "properties": {
+                    "success": {
+                        "description": "Indique l'échec",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "error": {
+                        "properties": {
+                            "code": {
+                                "description": "Code d'erreur",
+                                "type": "string",
+                                "example": "VALIDATION_ERROR"
+                            },
+                            "message": {
+                                "description": "Message d'erreur",
+                                "type": "string",
+                                "example": "Erreurs de validation"
+                            },
+                            "details": {
+                                "description": "Détails de l'erreur",
+                                "type": "object",
+                                "nullable": true
+                            }
+                        },
+                        "type": "object"
                     }
                 },
                 "type": "object"
