@@ -8,44 +8,30 @@ services:
       composer install --no-interaction --optimize-autoloader --no-dev
 
       # Création du fichier .env s'il n'existe pas
-      if [ ! -f ".env" ]; then
-        cp .env.example .env
-      fi
       if [ ! -f ".env" ]; then cp .env.example .env; fi
 
-      # Génération de la clé d'application
-      php -r "\$envFile = '.env'; \
-        \$key = 'base64:' . base64_encode(random_bytes(32)); \
-        \$content = file_get_contents(\$envFile); \
-        \$content = preg_replace('/^APP_KEY=.*/m', 'APP_KEY=' . \$key, \$content); \
-        file_put_contents(\$envFile, \$content);"
       # La clé d'application (APP_KEY) est gérée par Render via les envVars, donc pas besoin de la générer ici.
       # La commande "php artisan key:generate --force" est donc inutile ici.
 
       # Exécution des migrations pour créer les tables AVANT la mise en cache
-      php artisan migrate --force
       # Le flag --force est nécessaire pour l'exécution en mode non-interactif (production)
       php artisan migrate --force --seed
 
       # Configuration de l'application
-      php artisan config:clear # Effacer l'ancien cache s'il existe
       php artisan config:cache
 
       # Optimisation des routes et vues
       php artisan route:clear
       php artisan route:cache
-      php artisan view:clear
       php artisan view:cache
 
       # Configuration et génération de la documentation Swagger
       if [ -f "vendor/darkaonline/l5-swagger/src/helpers.php" ]; then
-        php artisan vendor:publish --provider="L5Swagger\L5SwaggerServiceProvider" --tag=config
         php artisan l5-swagger:generate --all || echo "Warning: Swagger generation failed but continuing..."
       else
         echo "Warning: L5-Swagger package not found, skipping Swagger generation"
       fi
     startCommand: >
-      php artisan serve --host=0.0.0.0 --port=$PORT
       /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisor.conf
     envVars:
       - key: APP_ENV
@@ -54,10 +40,6 @@ services:
         value: false
       - key: APP_KEY
         fromDatabase:
-          name: app
-          key: APP_KEY
-      - key: DB_CONNECTION
-        value: pgsql
           name: app # Assurez-vous que ce service s'appelle bien 'app' dans Render
       - key: DB_HOST
         fromDatabase:
