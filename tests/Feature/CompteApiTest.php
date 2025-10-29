@@ -16,25 +16,26 @@ class CompteApiTest extends TestCase
         // Créer des comptes de test
         Compte::factory()->count(3)->create();
 
-        $response = $this->getJson('/api/v1/comptes');
+        $response = $this->getJson('/dieng/v1/comptes');
 
         $response->assertStatus(200)
-                 ->assertJsonStructure([
-                     'success',
-                     'data' => [
-                         '*' => [
-                             'id',
-                             'numero',
-                             'type',
-                             'statut',
-                             'devise',
-                             'date_creation'
-                         ]
-                     ],
-                     'total',
-                     'debug'
-                 ])
-                 ->assertJson(['success' => true]);
+                  ->assertJsonStructure([
+                      'success',
+                      'data' => [
+                          '*' => [
+                              'id',
+                              'numero',
+                              'type',
+                              'statut',
+                              'devise',
+                              'date_creation',
+                              'solde'
+                          ]
+                      ],
+                      'pagination',
+                      'links'
+                  ])
+                  ->assertJson(['success' => true]);
     }
 
     /** @test */
@@ -43,25 +44,35 @@ class CompteApiTest extends TestCase
         $compteData = [
             'type' => 'courant',
             'statut' => 'actif',
-            'devise' => 'FCFA'
+            'devise' => 'FCFA',
+            'client' => [
+                'titulaire' => 'Test User',
+                'nci' => '1234567890123',
+                'email' => 'test@example.com',
+                'telephone' => '+221771234567',
+                'adresse' => 'Dakar, Senegal'
+            ]
         ];
 
-        $response = $this->postJson('/api/v1/comptes', $compteData);
+        $response = $this->postJson('/dieng/v1/comptes', $compteData);
 
         $response->assertStatus(201)
-                 ->assertJsonStructure([
-                     'success',
-                     'message',
-                     'data' => [
-                         'id',
-                         'numero',
-                         'type',
-                         'statut',
-                         'devise',
-                         'date_creation'
-                     ]
-                 ])
-                 ->assertJson(['success' => true]);
+                  ->assertJsonStructure([
+                      'success',
+                      'message',
+                      'data' => [
+                          'id',
+                          'numeroCompte',
+                          'titulaire',
+                          'type',
+                          'solde',
+                          'devise',
+                          'dateCreation',
+                          'statut',
+                          'metadata'
+                      ]
+                  ])
+                  ->assertJson(['success' => true]);
 
         $this->assertDatabaseHas('comptes', [
             'type' => 'courant',
@@ -75,28 +86,28 @@ class CompteApiTest extends TestCase
     {
         $compte = Compte::factory()->create();
 
-        $response = $this->getJson("/api/v1/comptes/{$compte->id}");
+        $response = $this->getJson("/dieng/v1/comptes/{$compte->id}");
 
         $response->assertStatus(200)
-                 ->assertJsonStructure([
-                     'success',
-                     'message',
-                     'data' => [
-                         'id',
-                         'numero',
-                         'type',
-                         'statut',
-                         'devise',
-                         'date_creation'
-                     ]
-                 ])
-                 ->assertJson(['success' => true]);
+                  ->assertJsonStructure([
+                      'success',
+                      'data' => [
+                          'id',
+                          'numero',
+                          'type',
+                          'statut',
+                          'devise',
+                          'date_creation',
+                          'solde'
+                      ]
+                  ])
+                  ->assertJson(['success' => true]);
     }
 
     /** @test */
     public function it_returns_404_for_nonexistent_compte()
     {
-        $response = $this->getJson('/api/v1/comptes/nonexistent-id');
+        $response = $this->getJson('/dieng/v1/comptes/nonexistent-id');
 
         $response->assertStatus(404)
                  ->assertJsonStructure([
@@ -119,22 +130,22 @@ class CompteApiTest extends TestCase
             'statut' => 'inactif'
         ];
 
-        $response = $this->putJson("/api/v1/comptes/{$compte->id}", $updateData);
+        $response = $this->putJson("/dieng/v1/comptes/{$compte->id}", $updateData);
 
         $response->assertStatus(200)
-                 ->assertJsonStructure([
-                     'success',
-                     'message',
-                     'data' => [
-                         'id',
-                         'numero',
-                         'type',
-                         'statut',
-                         'devise',
-                         'date_creation'
-                     ]
-                 ])
-                 ->assertJson(['success' => true]);
+                  ->assertJsonStructure([
+                      'success',
+                      'data' => [
+                          'id',
+                          'numero',
+                          'type',
+                          'statut',
+                          'devise',
+                          'date_creation',
+                          'solde'
+                      ]
+                  ])
+                  ->assertJson(['success' => true]);
 
         $this->assertDatabaseHas('comptes', array_merge(['id' => $compte->id], $updateData));
     }
@@ -144,14 +155,19 @@ class CompteApiTest extends TestCase
     {
         $compte = Compte::factory()->create();
 
-        $response = $this->deleteJson("/api/v1/comptes/{$compte->id}");
+        $response = $this->deleteJson("/dieng/v1/comptes/{$compte->id}");
 
         $response->assertStatus(200)
-                 ->assertJsonStructure([
-                     'success',
-                     'message'
-                 ])
-                 ->assertJson(['success' => true]);
+                  ->assertJsonStructure([
+                      'success',
+                      'message',
+                      'data' => [
+                          'compte_id',
+                          'numero',
+                          'status'
+                      ]
+                  ])
+                  ->assertJson(['success' => true]);
 
         // Vérifier que le compte est soft deleted
         $this->assertSoftDeleted('comptes', ['id' => $compte->id]);
@@ -166,24 +182,26 @@ class CompteApiTest extends TestCase
 
         $compte1->delete(); // Soft delete
 
-        $response = $this->getJson('/api/v1/comptes/archives');
+        $response = $this->getJson('/dieng/v1/comptes/archives');
 
         $response->assertStatus(200)
-                 ->assertJsonStructure([
-                     'success',
-                     'data' => [
-                         '*' => [
-                             'id',
-                             'numero',
-                             'type',
-                             'statut',
-                             'devise',
-                             'date_creation'
-                         ]
-                     ],
-                     'total'
-                 ])
-                 ->assertJson(['success' => true]);
+                  ->assertJsonStructure([
+                      'success',
+                      'data' => [
+                          '*' => [
+                              'id',
+                              'numero',
+                              'type',
+                              'statut',
+                              'devise',
+                              'date_creation',
+                              'solde'
+                          ]
+                      ],
+                      'pagination',
+                      'links'
+                  ])
+                  ->assertJson(['success' => true]);
 
         // Vérifier qu'un seul compte est dans les archives
         $this->assertCount(1, $response->json('data'));
@@ -195,22 +213,22 @@ class CompteApiTest extends TestCase
         $compte = Compte::factory()->create();
         $compte->delete(); // Soft delete
 
-        $response = $this->postJson("/api/v1/comptes/{$compte->id}/restore");
+        $response = $this->postJson("/dieng/v1/comptes/{$compte->id}/restore");
 
         $response->assertStatus(200)
-                 ->assertJsonStructure([
-                     'success',
-                     'message',
-                     'data' => [
-                         'id',
-                         'numero',
-                         'type',
-                         'statut',
-                         'devise',
-                         'date_creation'
-                     ]
-                 ])
-                 ->assertJson(['success' => true]);
+                  ->assertJsonStructure([
+                      'success',
+                      'data' => [
+                          'id',
+                          'numero',
+                          'type',
+                          'statut',
+                          'devise',
+                          'date_creation',
+                          'solde'
+                      ]
+                  ])
+                  ->assertJson(['success' => true]);
 
         // Vérifier que le compte n'est plus soft deleted
         $this->assertDatabaseHas('comptes', ['id' => $compte->id]);

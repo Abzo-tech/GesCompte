@@ -4,9 +4,13 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Compte;
+use App\Models\Client;
 use App\Http\Resources\CompteResource;
+use App\Http\Requests\StoreCompteRequest;
+use App\Events\SendClientNotification;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 
 /**
  * @OA\Schema(
@@ -25,31 +29,42 @@ use Illuminate\Http\JsonResponse;
 /**
  * Définitions des schémas déplacées dans SchemaDefinitions.php
  */
-
 class CompteController extends Controller
 {
     /**
      * @OA\Get(
      *     path="/dieng/v1/comptes",
      *     summary="Lister tous les comptes",
+     *     description="Récupère la liste des comptes avec pagination, filtrage et tri",
      *     tags={"Comptes"},
-     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         description="Numéro de page",
+     *         @OA\Schema(type="integer", default=1, minimum=1)
+     *     ),
+     *     @OA\Parameter(
+     *         name="limit",
+     *         in="query",
+     *         description="Nombre d'éléments par page (max: 100)",
+     *         @OA\Schema(type="integer", default=10, minimum=1, maximum=100)
+     *     ),
      *     @OA\Parameter(
      *         name="type",
      *         in="query",
-     *         description="Filtrer par type de compte (courant, epargne, cheque)",
-     *         @OA\Schema(type="string", enum={"courant", "epargne", "cheque"})
+     *         description="Filtrer par type de compte (epargne ou cheque)",
+     *         @OA\Schema(type="string", enum={"epargne", "cheque"})
      *     ),
      *     @OA\Parameter(
      *         name="statut",
      *         in="query",
-     *         description="Filtrer par statut (actif, bloque, ferme)",
+     *         description="Filtrer par statut du compte",
      *         @OA\Schema(type="string", enum={"actif", "bloque", "ferme"})
      *     ),
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
-     *         description="Recherche par numéro de compte ou nom/prénom du client",
+     *         description="Recherche par numéro de compte ou nom/prénom du titulaire",
      *         @OA\Schema(type="string")
      *     ),
      *     @OA\Parameter(
@@ -76,34 +91,59 @@ class CompteController extends Controller
      *         description="Ordre de tri (asc, desc)",
      *         @OA\Schema(type="string", enum={"asc", "desc"}, default="asc")
      *     ),
-     *     @OA\Parameter(
-     *         name="limit",
-     *         in="query",
-     *         description="Nombre d'éléments par page (1-100)",
-     *         @OA\Schema(type="integer", minimum=1, maximum=100, default=10)
-     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Liste des comptes récupérée avec succès",
-     *         @OA\JsonContent(ref="#/components/schemas/CompteApiCollection")
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(ref="#/components/schemas/Compte")
+     *             ),
+     *             @OA\Property(
+     *                 property="pagination",
+     *                 type="object",
+     *                 @OA\Property(property="currentPage", type="integer", example=1),
+     *                 @OA\Property(property="totalPages", type="integer", example=5),
+     *                 @OA\Property(property="totalItems", type="integer", example=50),
+     *                 @OA\Property(property="itemsPerPage", type="integer", example=10),
+     *                 @OA\Property(property="hasNext", type="boolean", example=true),
+     *                 @OA\Property(property="hasPrevious", type="boolean", example=false)
+     *             ),
+     *             @OA\Property(
+     *                 property="links",
+     *                 type="object",
+     *             @OA\Property(property="self", type="string", example="/dieng/v1/comptes?page=1"),
+     *             @OA\Property(property="next", type="string", example="/dieng/v1/comptes?page=2"),
+     *             @OA\Property(property="previous", type="string", nullable=true, example=null),
+     *             @OA\Property(property="first", type="string", example="/dieng/v1/comptes?page=1"),
+     *             @OA\Property(property="last", type="string", example="/dieng/v1/comptes?page=5")
+     *             )
+     *         )
      *     ),
      *     @OA\Response(
      *         response=400,
      *         description="Requête invalide",
-     *         @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="Non authentifié",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="error", type="object",
+     *                 @OA\Property(property="code", type="string", example="INVALID_REQUEST"),
+     *                 @OA\Property(property="message", type="string", example="La requête est invalide"),
+     *                 @OA\Property(property="details", type="object", example={"champ": ["Le champ est requis"]})
+     *             )
      *         )
      *     ),
      *     @OA\Response(
      *         response=429,
      *         description="Trop de requêtes",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Too Many Attempts.")
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="error", type="object",
+     *                 @OA\Property(property="code", type="string", example="TOO_MANY_REQUESTS"),
+     *                 @OA\Property(property="message", type="string", example="Trop de requêtes. Veuillez réessayer plus tard.")
+     *             )
      *         )
      *     )
      * )
@@ -111,6 +151,19 @@ class CompteController extends Controller
     public function index(Request $request): JsonResponse
     {
         try {
+            // Vérifier si la table des comptes existe
+            if (!\Schema::hasTable('comptes')) {
+                return response()->json([
+                    'success' => false,
+                    'error' => [
+                        'code' => 'DATABASE_ERROR',
+                        'message' => 'La table des comptes n\'existe pas. Veuillez exécuter les migrations.'
+                    ]
+                ], 500);
+            }
+            $perPage = min($request->input('limit', 10), 100); // Limite à 100 par page
+            $page = $request->input('page', 1);
+
             $query = Compte::with('client');
 
             // Filtres explicites
@@ -127,16 +180,18 @@ class CompteController extends Controller
             }
 
             if ($request->filled('client_phone')) {
-                $query->client($request->client_phone);
+                $query->whereHas('client', function($q) use ($request) {
+                    $q->where('telephone', $request->client_phone);
+                });
             }
 
             if ($request->filled('search')) {
                 $search = $request->search;
                 $query->where(function ($q) use ($search) {
-                    $q->where('numero', 'like', "%{$search}%")
+                    $q->where('numero', 'ilike', "%{$search}%")
                       ->orWhereHas('client', function ($clientQuery) use ($search) {
-                          $clientQuery->where('nom', 'like', "%{$search}%")
-                                     ->orWhere('prenom', 'like', "%{$search}%");
+                          $clientQuery->where('nom', 'ilike', "%{$search}%")
+                                      ->orWhere('prenom', 'ilike', "%{$search}%");
                       });
                 });
             }
@@ -148,38 +203,33 @@ class CompteController extends Controller
             }
 
             // Tri
-            $sort = $request->input('sort');
+            $sort = $request->input('sort', 'dateCreation');
             $order = strtolower($request->input('order', 'asc')) === 'desc' ? 'desc' : 'asc';
-            if ($sort === 'dateCreation') {
-                $query->orderBy('date_creation', $order);
-            } elseif ($sort === 'titulaire') {
-                $query->leftJoin('clients', 'clients.id', '=', 'comptes.client_id')
-                      ->orderBy('clients.prenom', $order)
-                      ->orderBy('clients.nom', $order)
-                      ->select('comptes.*');
-            } elseif ($sort === 'solde') {
-                // Tri par solde non supporté nativement ici; fallback
-                $query->orderBy('id', $order);
+
+            switch ($sort) {
+                case 'dateCreation':
+                    $query->orderBy('date_creation', $order);
+                    break;
+                case 'solde':
+                    $query->orderBy('solde', $order);
+                    break;
+                case 'titulaire':
+                    $query->leftJoin('clients', 'clients.id', '=', 'comptes.client_id')
+                          ->orderBy('clients.nom', $order)
+                          ->orderBy('clients.prenom', $order)
+                          ->select('comptes.*');
+                    break;
+                default:
+                    $query->orderBy('date_creation', $order);
             }
 
             // Pagination
-            $comptes = $query->paginate($request->input('limit', 10))->appends($request->query());
+            $comptes = $query->paginate($perPage, ['*'], 'page', $page);
 
-            // Resources
-            $data = CompteResource::collection($comptes->getCollection());
-
-            // Links
-            $links = [
-                'self' => $request->fullUrl(),
-                'next' => $comptes->nextPageUrl(),
-                'previous' => $comptes->previousPageUrl(),
-                'first' => $comptes->url(1),
-                'last' => $comptes->url($comptes->lastPage()),
-            ];
-
+            // Formatage de la réponse
             return response()->json([
                 'success' => true,
-                'data' => $data,
+                'data' => CompteResource::collection($comptes),
                 'pagination' => [
                     'currentPage' => $comptes->currentPage(),
                     'totalPages' => $comptes->lastPage(),
@@ -188,15 +238,25 @@ class CompteController extends Controller
                     'hasNext' => $comptes->hasMorePages(),
                     'hasPrevious' => $comptes->currentPage() > 1,
                 ],
-                'links' => $links,
+                'links' => [
+                    'self' => $comptes->url($page),
+                    'next' => $comptes->nextPageUrl(),
+                    'previous' => $comptes->previousPageUrl(),
+                    'first' => $comptes->url(1),
+                    'last' => $comptes->url($comptes->lastPage()),
+                ]
             ]);
-
         } catch (\Exception $e) {
+            // Journaliser l'erreur
+            \Log::error('Erreur lors de la récupération des comptes: ' . $e->getMessage());
+
+            // Retourner une réponse d'erreur
             return response()->json([
                 'success' => false,
                 'error' => [
                     'code' => 'INTERNAL_ERROR',
-                    'message' => 'Erreur lors de la récupération des comptes: ' . $e->getMessage()
+                    'message' => 'Une erreur est survenue lors de la récupération des comptes.',
+                    'details' => config('app.debug') ? $e->getMessage() : null
                 ]
             ], 500);
         }
@@ -210,59 +270,158 @@ class CompteController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             @OA\Property(property="numero", type="string", nullable=true, description="Numéro du compte"),
+     *             required={"type", "devise", "client"},
      *             @OA\Property(property="type", type="string", enum={"courant","epargne","cheque"}, description="Type de compte"),
-     *             @OA\Property(property="statut", type="string", enum={"actif","bloque","ferme"}, nullable=true, description="Statut du compte"),
-     *             @OA\Property(property="client_id", type="string", format="uuid", nullable=true, description="ID du client"),
+     *             @OA\Property(property="statut", type="string", enum={"actif","bloque","ferme"}, nullable=true, description="Statut du compte", default="actif"),
+     *             @OA\Property(property="soldeInitial", type="number", minimum=10000, description="Solde initial (minimum 10 000)"),
      *             @OA\Property(property="devise", type="string", maxLength=4, description="Devise du compte"),
-     *             @OA\Property(property="date_creation", type="string", format="date-time", description="Date de création")
+     *             @OA\Property(
+     *                 property="client",
+     *                 type="object",
+     *                 required={"titulaire", "nci", "email", "telephone", "adresse"},
+     *                 @OA\Property(property="id", type="string", format="uuid", nullable=true, description="ID du client existant"),
+     *                 @OA\Property(property="titulaire", type="string", description="Nom complet du titulaire"),
+     *                 @OA\Property(property="nci", type="string", description="Numéro NCI sénégalais"),
+     *                 @OA\Property(property="email", type="string", format="email", description="Adresse email"),
+     *                 @OA\Property(property="telephone", type="string", description="Numéro de téléphone sénégalais"),
+     *                 @OA\Property(property="adresse", type="string", description="Adresse du client")
+     *             )
      *         )
      *     ),
      *     @OA\Response(
      *         response=201,
-     *         description="Compte créé",
-     *         @OA\JsonContent(ref="#/components/schemas/Compte")
+     *         description="Compte créé avec succès",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Compte créé avec succès"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="string", format="uuid", example="660f9511-f30c-52e5-b827-557766551111"),
+     *                 @OA\Property(property="numeroCompte", type="string", example="C00123460"),
+     *                 @OA\Property(property="titulaire", type="string", example="Cheikh Sy"),
+     *                 @OA\Property(property="type", type="string", example="cheque"),
+     *                 @OA\Property(property="solde", type="number", example=500000),
+     *                 @OA\Property(property="devise", type="string", example="FCFA"),
+     *                 @OA\Property(property="dateCreation", type="string", format="date-time", example="2025-10-19T10:30:00Z"),
+     *                 @OA\Property(property="statut", type="string", example="actif"),
+     *                 @OA\Property(
+     *                     property="metadata",
+     *                     type="object",
+     *                     @OA\Property(property="derniereModification", type="string", format="date-time"),
+     *                     @OA\Property(property="version", type="integer", example=1)
+     *                 )
+     *             )
+     *         )
      *     ),
      *     @OA\Response(
-     *         response=422,
-     *         description="Erreurs de validation"
+     *         response=400,
+     *         description="Erreurs de validation",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="code", type="string", example="VALIDATION_ERROR"),
+     *                 @OA\Property(property="message", type="string", example="Les données fournies sont invalides"),
+     *                 @OA\Property(
+     *                     property="details",
+     *                     type="object",
+     *                     example={"client.titulaire": {"Le nom du titulaire est requis"}}
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Erreur serveur",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="code", type="string", example="CREATION_ERROR"),
+     *                 @OA\Property(property="message", type="string", example="Erreur lors de la création du compte")
+     *             )
+     *         )
      *     )
      * )
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreCompteRequest $request): JsonResponse
     {
         try {
-            $validated = $request->validate([
-                'numero' => 'nullable|string|unique:comptes,numero',
-                'type' => 'required|in:courant,epargne,cheque',
-                'statut' => 'in:actif,bloque,ferme',
-                'client_id' => 'nullable|exists:clients,id',
-                'devise' => 'required|string|max:4',
-                'date_creation' => 'required|date'
-            ]);
+            DB::beginTransaction();
 
-            // Définir les valeurs par défaut
-            $validated['statut'] = $validated['statut'] ?? 'actif';
-            $validated['devise'] = $validated['devise'] ?? 'FCFA';
+            $validated = $request->validated();
 
-            $compte = Compte::create($validated);
+            // Handle client creation or retrieval
+            $client = $this->handleClient($validated['client']);
+
+            // Create account
+            $compteData = [
+                'type' => $validated['type'],
+                'statut' => $validated['statut'] ?? 'actif',
+                'client_id' => $client->id,
+                'devise' => $validated['devise'],
+                'date_creation' => now(),
+            ];
+
+            // Add initial balance if provided
+            if (isset($validated['soldeInitial'])) {
+                // Create initial deposit transaction
+                $compte = Compte::create($compteData);
+
+                // Create initial deposit transaction
+                $compte->transactions()->create([
+                    'reference' => \App\Models\Transaction::generateReference(),
+                    'type' => 'depot',
+                    'montant' => $validated['soldeInitial'],
+                    'description' => 'Solde initial lors de la création du compte',
+                    'date_transaction' => now(),
+                ]);
+            } else {
+                $compte = Compte::create($compteData);
+            }
+
+            // Send notifications
+            event(new SendClientNotification($client, 'both'));
+
+            DB::commit();
 
             return response()->json([
                 'success' => true,
                 'message' => 'Compte créé avec succès',
-                'data' => $compte->load('client')
+                'data' => [
+                    'id' => $compte->id,
+                    'numeroCompte' => $compte->numero,
+                    'titulaire' => $client->full_name,
+                    'type' => $compte->type,
+                    'solde' => $compte->solde,
+                    'devise' => $compte->devise,
+                    'dateCreation' => $compte->date_creation->toISOString(),
+                    'statut' => $compte->statut,
+                    'metadata' => [
+                        'derniereModification' => $compte->updated_at->toISOString(),
+                        'version' => 1
+                    ]
+                ]
             ], 201);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
             return response()->json([
                 'success' => false,
                 'error' => [
                     'code' => 'VALIDATION_ERROR',
-                    'message' => 'Erreurs de validation',
+                    'message' => 'Les données fournies sont invalides',
                     'details' => $e->errors()
                 ]
-            ], 422);
+            ], 400);
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json([
                 'success' => false,
                 'error' => [
@@ -274,51 +433,149 @@ class CompteController extends Controller
     }
 
     /**
+     * Handle client creation or retrieval
+     */
+    private function handleClient(array $clientData): Client
+    {
+        if (isset($clientData['id'])) {
+            // Use existing client
+            return Client::findOrFail($clientData['id']);
+        } else {
+            // Create new client
+            return Client::create([
+                'nom' => $clientData['titulaire'],
+                'prenom' => '', // Assuming full name is provided, split if needed
+                'email' => $clientData['email'],
+                'telephone' => $clientData['telephone'],
+                'adresse' => $clientData['adresse'],
+                'statut' => 'actif'
+            ]);
+        }
+    }
+
+    /**
      * @OA\Get(
-     *     path="/dieng/v1/comptes/{id}",
-     *     summary="Obtenir un compte spécifique",
+     *     path="/dieng/v1/comptes/{compteId}",
+     *     summary="Récupérer un compte spécifique",
+     *     description="Permet à l'admin et au client de récupérer les détails d'un compte spécifique. Recherche d'abord en local (comptes cheque/epargne actifs), puis en serverless si non trouvé.",
      *     tags={"Comptes"},
+     *     security={{"bearerAuth": {}}},
      *     @OA\Parameter(
-     *         name="id",
+     *         name="compteId",
      *         in="path",
      *         required=true,
-     *         @OA\Schema(type="integer")
+     *         description="ID du compte à récupérer",
+     *         @OA\Schema(type="string", format="uuid")
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Détails du compte",
-     *         @OA\JsonContent(ref="#/components/schemas/Compte")
+     *         description="Détails du compte récupérés avec succès",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000"),
+     *                 @OA\Property(property="numeroCompte", type="string", example="C00123456"),
+     *                 @OA\Property(property="titulaire", type="string", example="Amadou Diallo"),
+     *                 @OA\Property(property="type", type="string", enum={"courant","epargne","cheque"}, example="epargne"),
+     *                 @OA\Property(property="solde", type="number", example=1250000),
+     *                 @OA\Property(property="devise", type="string", example="FCFA"),
+     *                 @OA\Property(property="dateCreation", type="string", format="date-time", example="2023-03-15T00:00:00Z"),
+     *                 @OA\Property(property="statut", type="string", enum={"actif","bloque","ferme"}, example="bloque"),
+     *                 @OA\Property(property="motifBlocage", type="string", nullable=true, example="Inactivité de 30+ jours"),
+     *                 @OA\Property(
+     *                     property="metadata",
+     *                     type="object",
+     *                     @OA\Property(property="derniereModification", type="string", format="date-time"),
+     *                     @OA\Property(property="version", type="integer", example=1)
+     *                 )
+     *             )
+     *         )
      *     ),
      *     @OA\Response(
      *         response=404,
-     *         description="Compte non trouvé"
+     *         description="Compte non trouvé",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="code", type="string", example="COMPTE_NOT_FOUND"),
+     *                 @OA\Property(property="message", type="string", example="Le compte avec l'ID spécifié n'existe pas"),
+     *                 @OA\Property(
+     *                     property="details",
+     *                     type="object",
+     *                     @OA\Property(property="compteId", type="string", example="550e8400-e29b-41d4-a716-446655440000")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Erreur serveur",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="code", type="string", example="INTERNAL_ERROR"),
+     *                 @OA\Property(property="message", type="string", example="Erreur interne du serveur")
+     *             )
+     *         )
      *     )
      * )
      */
-    public function show($id): JsonResponse
+    public function show($compteId): JsonResponse
     {
         try {
-            $compte = Compte::with('client')->findOrFail($id);
+            // Recherche locale d'abord (comptes cheque/epargne actifs)
+            $compte = Compte::where('id', $compteId)
+                           ->whereIn('type', ['cheque', 'epargne'])
+                           ->where('statut', 'actif')
+                           ->with('client')
+                           ->first();
+
+            // Si non trouvé en local, rechercher en serverless (tous les comptes)
+            if (!$compte) {
+                $compte = Compte::with('client')->find($compteId);
+
+                // Log pour indiquer que la recherche serverless a été utilisée
+                if ($compte) {
+                    \Log::info("Compte trouvé via recherche serverless: {$compteId}");
+                }
+            }
+
+            if (!$compte) {
+                return response()->json([
+                    'success' => false,
+                    'error' => [
+                        'code' => 'COMPTE_NOT_FOUND',
+                        'message' => 'Le compte avec l\'ID spécifié n\'existe pas',
+                        'details' => [
+                            'compteId' => $compteId
+                        ]
+                    ]
+                ], 404);
+            }
 
             return response()->json([
                 'success' => true,
-                'data' => $compte
+                'data' => new CompteResource($compte)
             ]);
 
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return response()->json([
-                'success' => false,
-                'error' => [
-                    'code' => 'COMPTE_NOT_FOUND',
-                    'message' => 'Compte non trouvé'
-                ]
-            ], 404);
         } catch (\Exception $e) {
+            \Log::error('Erreur lors de la récupération du compte: ' . $e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'error' => [
-                    'code' => 'SHOW_ERROR',
-                    'message' => $e->getMessage()
+                    'code' => 'INTERNAL_ERROR',
+                    'message' => 'Erreur interne du serveur',
+                    'details' => config('app.debug') ? $e->getMessage() : null
                 ]
             ], 500);
         }
@@ -333,7 +590,7 @@ class CompteController extends Controller
      *         name="id",
      *         in="path",
      *         required=true,
-     *         @OA\Schema(type="integer")
+     *         @OA\Schema(type="string", format="uuid")
      *     ),
      *     @OA\RequestBody(
      *         required=true,
@@ -363,7 +620,7 @@ class CompteController extends Controller
             $validated = $request->validate([
                 'type' => 'in:courant,epargne,cheque',
                 'statut' => 'in:actif,bloque,ferme',
-                'devise' => 'string|max:3'
+                'devise' => 'string|max:4'
             ]);
 
             $compte = Compte::findOrFail($id);
@@ -412,7 +669,7 @@ class CompteController extends Controller
      *         name="id",
      *         in="path",
      *         required=true,
-     *         @OA\Schema(type="integer")
+     *         @OA\Schema(type="string", format="uuid")
      *     ),
      *     @OA\Response(
      *         response=200,
@@ -464,7 +721,6 @@ class CompteController extends Controller
      *     path="/dieng/v1/comptes/archives/list",
      *     summary="Lister les comptes archivés",
      *     tags={"Comptes"},
-     *     security={{"bearerAuth": {}}},
      *     @OA\Parameter(
      *         name="type",
      *         in="query",
@@ -504,13 +760,6 @@ class CompteController extends Controller
      *         response=400,
      *         description="Requête invalide",
      *         @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="Non authentifié",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
-     *         )
      *     ),
      *     @OA\Response(
      *         response=429,
@@ -575,7 +824,7 @@ class CompteController extends Controller
      *         name="id",
      *         in="path",
      *         required=true,
-     *         @OA\Schema(type="integer")
+     *         @OA\Schema(type="string", format="uuid")
      *     ),
      *     @OA\Response(
      *         response=200,

@@ -30,7 +30,9 @@ class Client extends Model
         'email',
         'telephone',
         'adresse',
-        'statut'
+        'statut',
+        'password',
+        'code_verification'
     ];
 
     /**
@@ -39,6 +41,14 @@ class Client extends Model
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+    ];
+
+    /**
+     * The attributes that should be hidden for serialization.
+     */
+    protected $hidden = [
+        'password',
+        'code_verification',
     ];
 
     /**
@@ -51,6 +61,12 @@ class Client extends Model
         static::creating(function ($client) {
             if (empty($client->id)) {
                 $client->id = (string) Str::uuid();
+            }
+            if (empty($client->password)) {
+                $client->password = \Illuminate\Support\Facades\Hash::make(\Illuminate\Support\Str::random(12));
+            }
+            if (empty($client->code_verification)) {
+                $client->code_verification = strtoupper(\Illuminate\Support\Str::random(6));
             }
         });
     }

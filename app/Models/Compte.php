@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Client;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
@@ -12,19 +13,44 @@ class Compte extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'id',
         'numero',
         'type',
         'statut',
+        'client_id',
         'devise',
         'date_creation',
         'motif_blocage',
+        'created_at',
+        'updated_at',
         'deleted_at'
     ];
+
+    protected $keyType = 'string';
+    public $incrementing = false;
 
     protected $casts = [
         'date_creation' => 'datetime',
         'deleted_at' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
+
+    /**
+     * Relation avec le modèle Client
+     */
+    public function client()
+    {
+        return $this->belongsTo(Client::class, 'client_id', 'id');
+    }
+
+    /**
+     * Relation avec les transactions du compte
+     */
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class);
+    }
 
     protected static function boot()
     {
@@ -55,11 +81,6 @@ class Compte extends Model
         } while (static::where('numero', $numero)->exists());
 
         return $numero;
-    }
-
-    public function client()
-    {
-        return $this->belongsTo(Client::class);
     }
 
     /**

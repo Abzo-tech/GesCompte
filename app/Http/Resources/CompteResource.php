@@ -22,17 +22,15 @@ class CompteResource extends JsonResource
             'numeroCompte' => $this->numero,
             'titulaire' => $titulaire ?: null,
             'type' => $this->type,
-            // Placeholder: solde non implémenté. Retourner 0 par défaut.
-            'solde' => 0,
+            'solde' => (float) $this->solde ?? 0,
             'devise' => $this->devise,
-            'dateCreation' => optional($this->date_creation)->toISOString(),
+            'dateCreation' => optional($this->date_creation)->toIso8601String(),
             'statut' => $this->statut,
-            // Placeholder motifBlocage
-            'motifBlocage' => $this->statut === 'bloque' ? ($this->motif_blocage ?? 'Bloqué') : null,
+            'motifBlocage' => $this->statut === 'bloque' ? ($this->motif_blocage ?? 'Raison non spécifiée') : null,
             'metadata' => [
-                'derniereModification' => optional($this->updated_at)->toISOString(),
-                'version' => 1,
-            ],
+                'derniereModification' => optional($this->updated_at)->toIso8601String(),
+                'version' => $this->version ?? 1,
+            ]
         ];
     }
 }
