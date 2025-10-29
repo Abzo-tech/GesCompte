@@ -66,6 +66,8 @@ services:
         value: 60
       - key: DATABASE_URL
         sync: false # IMPORTANT: Définissez DATABASE_URL comme un secret dans le tableau de bord Render
+      - key: APP_KEY
+        sync: false # IMPORTANT: Clé d'application Laravel
       - key: APP_URL
         value: https://gesbanque.onrender.com # Remplacez par l'URL de votre service Render
       - key: LOG_CHANNEL

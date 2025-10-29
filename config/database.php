@@ -35,6 +35,25 @@ return [
 
     'connections' => [
 
+        'neon' => [
+            'driver' => 'pgsql',
+            'url' => env('DATABASE_URL'),
+            'host' => env('NEON_DB_HOST', 'ep-misty-bar-a4j2hw28-pooler.us-east-1.aws.neon.tech'),
+            'port' => env('NEON_DB_PORT', '5432'),
+            'database' => env('NEON_DB_DATABASE', 'neondb'),
+            'username' => env('NEON_DB_USERNAME', 'neondb_owner'),
+            'password' => env('NEON_DB_PASSWORD', ''),
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => env('NEON_DB_SSLMODE', 'require'),
+            'options' => [
+                PDO::ATTR_TIMEOUT => env('NEON_DB_CONNECTION_TIMEOUT', 60),
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            ],
+        ],
+
         'sqlite' => [
             'driver' => 'sqlite',
             'url' => env('DATABASE_URL'),
