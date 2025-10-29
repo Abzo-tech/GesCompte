@@ -12,21 +12,12 @@ services:
       php artisan view:clear
 
       # Attendre que la base de données soit prête avant les migrations
-      attempts=0
-      max_attempts=30
-      until PGPASSWORD="${DB_PASSWORD}" psql "postgresql://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_DATABASE}?sslmode=require" -c "SELECT 1;" > /dev/null 2>&1 || [ $attempts -ge $max_attempts ]; do
-        echo "Database not ready for migrations - sleeping (attempt $((attempts+1))/$max_attempts)"
-        sleep 2
-        attempts=$((attempts+1))
-      done
+      echo "Waiting for database connection..."
+      sleep 10
+      echo "Proceeding with migrations..."
 
       # Exécution des migrations (le --force est nécessaire en production)
-      if [ $attempts -lt $max_attempts ]; then
-        php artisan migrate --force --seed
-      else
-        echo "Warning: Database was not ready, skipping migrations"
-        php artisan migrate --force --seed || echo "Warning: Migrations failed, but continuing..."
-      fi
+      php artisan migrate --force --seed
 
       # Mise en cache pour la production
       php artisan config:cache
