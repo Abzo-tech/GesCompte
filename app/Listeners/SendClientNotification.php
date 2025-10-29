@@ -2,7 +2,7 @@
 
 namespace App\Listeners;
 
-use App\Events\SendClientNotification;
+use App\Events\SendClientNotification as SendClientNotificationEvent;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Mail;
@@ -23,7 +23,7 @@ class SendClientNotification implements ShouldQueue
     /**
      * Handle the event.
      */
-    public function handle(SendClientNotification $event): void
+    public function handle(SendClientNotificationEvent $event): void
     {
         $client = $event->client;
 

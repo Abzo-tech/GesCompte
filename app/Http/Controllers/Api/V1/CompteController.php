@@ -582,54 +582,160 @@ class CompteController extends Controller
     }
 
     /**
-     * @OA\Put(
-     *     path="/dieng/v1/comptes/{id}",
-     *     summary="Mettre à jour un compte",
+     * @OA\Patch(
+     *     path="/dieng/v1/comptes/{compteId}",
+     *     summary="Mettre à jour les informations du client",
+     *     description="Permet de mettre à jour les informations du client associé à un compte. Tous les champs sont optionnels mais au moins un champ doit être fourni.",
      *     tags={"Comptes"},
+     *     security={{"bearerAuth": {}}},
      *     @OA\Parameter(
-     *         name="id",
+     *         name="compteId",
      *         in="path",
      *         required=true,
+     *         description="ID du compte dont on veut modifier les informations client",
      *         @OA\Schema(type="string", format="uuid")
      *     ),
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             @OA\Property(property="numero", type="string", nullable=true, description="Numéro du compte"),
-     *             @OA\Property(property="type", type="string", enum={"courant","epargne","cheque"}, description="Type de compte"),
-     *             @OA\Property(property="statut", type="string", enum={"actif","bloque","ferme"}, nullable=true, description="Statut du compte"),
-     *             @OA\Property(property="client_id", type="string", format="uuid", nullable=true, description="ID du client"),
-     *             @OA\Property(property="devise", type="string", maxLength=4, description="Devise du compte"),
-     *             @OA\Property(property="date_creation", type="string", format="date-time", description="Date de création")
+     *             @OA\Property(property="titulaire", type="string", description="Nouveau nom du titulaire"),
+     *             @OA\Property(
+     *                 property="informationsClient",
+     *                 type="object",
+     *                 description="Informations du client à mettre à jour",
+     *                 @OA\Property(property="telephone", type="string", description="Nouveau numéro de téléphone sénégalais"),
+     *                 @OA\Property(property="email", type="string", format="email", description="Nouvelle adresse email"),
+     *                 @OA\Property(property="password", type="string", description="Nouveau mot de passe"),
+     *                 @OA\Property(property="nci", type="string", description="Nouveau numéro NCI sénégalais")
+     *             )
      *         )
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Compte mis à jour",
-     *         @OA\JsonContent(ref="#/components/schemas/Compte")
+     *         description="Informations du client mises à jour avec succès",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Informations du client mises à jour avec succès"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000"),
+     *                 @OA\Property(property="numeroCompte", type="string", example="C00123456"),
+     *                 @OA\Property(property="titulaire", type="string", example="Amadou Diallo Junior"),
+     *                 @OA\Property(property="type", type="string", enum={"courant","epargne","cheque"}, example="epargne"),
+     *                 @OA\Property(property="solde", type="number", example=1250000),
+     *                 @OA\Property(property="devise", type="string", example="FCFA"),
+     *                 @OA\Property(property="dateCreation", type="string", format="date-time", example="2023-03-15T00:00:00Z"),
+     *                 @OA\Property(property="statut", type="string", enum={"actif","bloque","ferme"}, example="bloque"),
+     *                 @OA\Property(
+     *                     property="metadata",
+     *                     type="object",
+     *                     @OA\Property(property="derniereModification", type="string", format="date-time"),
+     *                     @OA\Property(property="version", type="integer", example=1)
+     *                 )
+     *             )
+     *         )
      *     ),
      *     @OA\Response(
-     *         response=422,
-     *         description="Erreurs de validation"
+     *         response=400,
+     *         description="Erreurs de validation ou aucun champ fourni",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="code", type="string", example="VALIDATION_ERROR"),
+     *                 @OA\Property(property="message", type="string", example="Au moins un champ doit être fourni pour la mise à jour"),
+     *                 @OA\Property(
+     *                     property="details",
+     *                     type="object",
+     *                     example={"general": {"Au moins un champ doit être fourni pour la mise à jour"}}
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Compte non trouvé",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="code", type="string", example="COMPTE_NOT_FOUND"),
+     *                 @OA\Property(property="message", type="string", example="Le compte avec l'ID spécifié n'existe pas")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Erreur serveur",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="code", type="string", example="INTERNAL_ERROR"),
+     *                 @OA\Property(property="message", type="string", example="Erreur interne du serveur")
+     *             )
+     *         )
      *     )
      * )
      */
-    public function update(Request $request, $id): JsonResponse
+    public function update(\App\Http\Requests\UpdateClientRequest $request, $compteId): JsonResponse
     {
         try {
-            $validated = $request->validate([
-                'type' => 'in:courant,epargne,cheque',
-                'statut' => 'in:actif,bloque,ferme',
-                'devise' => 'string|max:4'
-            ]);
+            // Récupérer le compte
+            $compte = Compte::with('client')->findOrFail($compteId);
 
-            $compte = Compte::findOrFail($id);
-            $compte->update($validated);
+            $validated = $request->validated();
+
+            // Préparer les données de mise à jour du client
+            $clientData = [];
+
+            if (isset($validated['titulaire'])) {
+                // Si titulaire est fourni, on suppose que c'est "Prénom Nom"
+                $parts = explode(' ', $validated['titulaire'], 2);
+                $clientData['prenom'] = $parts[0] ?? '';
+                $clientData['nom'] = $parts[1] ?? $parts[0] ?? '';
+            }
+
+            if (isset($validated['informationsClient'])) {
+                $clientInfo = $validated['informationsClient'];
+
+                if (isset($clientInfo['telephone'])) {
+                    $clientData['telephone'] = $clientInfo['telephone'];
+                }
+
+                if (isset($clientInfo['email'])) {
+                    $clientData['email'] = $clientInfo['email'];
+                }
+
+                if (isset($clientInfo['password'])) {
+                    $clientData['password'] = bcrypt($clientInfo['password']);
+                }
+
+                if (isset($clientInfo['nci'])) {
+                    $clientData['nci'] = $clientInfo['nci'];
+                }
+            }
+
+            // Mettre à jour le client si des données sont fournies
+            if (!empty($clientData)) {
+                $compte->client->update($clientData);
+            }
+
+            // Recharger le compte avec les données mises à jour
+            $compte->load('client');
 
             return response()->json([
                 'success' => true,
-                'message' => 'Compte mis à jour avec succès',
-                'data' => $compte->load('client')
+                'message' => 'Informations du client mises à jour avec succès',
+                'data' => new CompteResource($compte)
             ]);
 
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
@@ -637,7 +743,10 @@ class CompteController extends Controller
                 'success' => false,
                 'error' => [
                     'code' => 'COMPTE_NOT_FOUND',
-                    'message' => 'Compte non trouvé'
+                    'message' => 'Le compte avec l\'ID spécifié n\'existe pas',
+                    'details' => [
+                        'compteId' => $compteId
+                    ]
                 ]
             ], 404);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -645,16 +754,19 @@ class CompteController extends Controller
                 'success' => false,
                 'error' => [
                     'code' => 'VALIDATION_ERROR',
-                    'message' => 'Erreurs de validation',
+                    'message' => 'Les données fournies sont invalides',
                     'details' => $e->errors()
                 ]
-            ], 422);
+            ], 400);
         } catch (\Exception $e) {
+            \Log::error('Erreur lors de la mise à jour des informations client: ' . $e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'error' => [
-                    'code' => 'UPDATE_ERROR',
-                    'message' => $e->getMessage()
+                    'code' => 'INTERNAL_ERROR',
+                    'message' => 'Erreur interne du serveur',
+                    'details' => config('app.debug') ? $e->getMessage() : null
                 ]
             ], 500);
         }
