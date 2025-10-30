@@ -26,7 +26,7 @@ php artisan key:generate --force
 # Mettre en cache config, routes et views
 php artisan config:cache
 php artisan route:cache
-# php artisan view:cache || true  # éviter l'échec si pas de vues
+php artisan view:cache || true
 
 # Générer la documentation
 php artisan l5-swagger:generate --all || echo "Warning: Swagger generation failed but continuing..."
