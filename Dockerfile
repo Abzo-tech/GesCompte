@@ -78,8 +78,7 @@ USER laravel
 # Exécuter les commandes artisan
 RUN php artisan key:generate --force && \
     php artisan config:cache && \
-    php artisan route:cache && \
-    php artisan view:cache || true
+    php artisan route:cache
 
 # Exposer le port
 EXPOSE 8000
