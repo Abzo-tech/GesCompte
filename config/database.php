@@ -47,7 +47,7 @@ return [
             'prefix' => '',
             'prefix_indexes' => true,
             'search_path' => 'public',
-            'sslmode' => 'require',
+            // 'sslmode' => 'require',
             'options' => [
                 PDO::ATTR_TIMEOUT => env('NEON_DB_CONNECTION_TIMEOUT', 60),
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
@@ -94,7 +94,7 @@ return [
             'prefix' => '',
             'prefix_indexes' => true,
             'search_path' => 'public',
-            'sslmode' => env('DB_SSLMODE', 'require'), // Forcé à 'require' pour Neon
+            // 'sslmode' => env('DB_SSLMODE', 'require'), // Forcé à 'require' pour Neon
             'options' => [
                 PDO::ATTR_TIMEOUT => env('DB_CONNECTION_TIMEOUT', 60), // Timeout de connexion en secondes
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,

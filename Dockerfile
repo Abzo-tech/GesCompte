@@ -47,7 +47,7 @@ RUN mkdir -p storage/framework/cache \
 # Créer un fichier .env minimal
 RUN echo "APP_NAME=Laravel" > .env && \
     echo "APP_ENV=production" >> .env && \
-    echo "APP_KEY=base64:`php -r \"echo base64_encode(random_bytes(32));\"`" >> .env && \
+    echo "APP_KEY=" >> .env && \
     echo "APP_DEBUG=false" >> .env && \
     echo "APP_URL=https://gescompte-1.onrender.com" >> .env && \
     echo "" >> .env && \
@@ -55,16 +55,15 @@ RUN echo "APP_NAME=Laravel" > .env && \
     echo "LOG_LEVEL=error" >> .env && \
     echo "" >> .env && \
     echo "DB_CONNECTION=pgsql" >> .env && \
-    echo "DB_HOST=${DB_HOST}" >> .env && \
-    echo "DB_PORT=${DB_PORT}" >> .env && \
-    echo "DB_DATABASE=${DB_DATABASE}" >> .env && \
-    echo "DB_USERNAME=${DB_USERNAME}" >> .env && \
-    echo "DB_PASSWORD=${DB_PASSWORD}" >> .env && \
+    echo "DB_HOST=\${DB_HOST}" >> .env && \
+    echo "DB_PORT=\${DB_PORT}" >> .env && \
+    echo "DB_DATABASE=\${DB_DATABASE}" >> .env && \
+    echo "DB_USERNAME=\${DB_USERNAME}" >> .env && \
+    echo "DB_PASSWORD=\${DB_PASSWORD}" >> .env && \
     echo "" >> .env && \
     echo "CACHE_DRIVER=file" >> .env && \
     echo "SESSION_DRIVER=file" >> .env && \
-    echo "QUEUE_CONNECTION=sync" >> .env && \
-    echo "VIEW_COMPILED_PATH=/var/www/html/storage/framework/views" >> .env
+    echo "QUEUE_CONNECTION=sync" >> .env
 
 # Changer les permissions du fichier .env
 RUN chown laravel:laravel .env
