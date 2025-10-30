@@ -1,4 +1,4 @@
-# Étape 1: Build des dépendances PHP
+    # Étape 1: Build des dépendances PHP
 FROM composer:2.6 AS composer-build
 
 WORKDIR /app
@@ -55,11 +55,11 @@ RUN echo "APP_NAME=Laravel" > .env && \
     echo "LOG_LEVEL=error" >> .env && \
     echo "" >> .env && \
     echo "DB_CONNECTION=pgsql" >> .env && \
-    echo "DB_HOST=dpg-cu7f9l5ds78s73e3j8j0-a" >> .env && \
+    echo "DB_HOST=ep-misty-bar-a4j2hw28-pooler.us-east-1.aws.neon.tech" >> .env && \
     echo "DB_PORT=5432" >> .env && \
-    echo "DB_DATABASE=gescompte" >> .env && \
-    echo "DB_USERNAME=gescompte_user" >> .env && \
-    echo "DB_PASSWORD=your_password_here" >> .env && \
+    echo "DB_DATABASE=neondb" >> .env && \
+    echo "DB_USERNAME=neondb_owner" >> .env && \
+    echo "DB_PASSWORD=npg_5Csd3MhOpWfT" >> .env && \
     echo "" >> .env && \
     echo "CACHE_DRIVER=file" >> .env && \
     echo "SESSION_DRIVER=file" >> .env && \
