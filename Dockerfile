@@ -75,6 +75,12 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 # Passer à l'utilisateur non-root
 USER laravel
 
+# Exécuter les commandes artisan
+RUN php artisan key:generate --force && \
+    php artisan config:cache && \
+    php artisan route:cache && \
+    php artisan view:cache || true
+
 # Exposer le port
 EXPOSE 8000
 
