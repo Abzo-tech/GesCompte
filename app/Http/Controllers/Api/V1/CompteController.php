@@ -115,11 +115,11 @@ class CompteController extends Controller
      *             @OA\Property(
      *                 property="links",
      *                 type="object",
-     *             @OA\Property(property="self", type="string", example="/dieng/v1/comptes?page=1"),
-     *             @OA\Property(property="next", type="string", example="/dieng/v1/comptes?page=2"),
-     *             @OA\Property(property="previous", type="string", nullable=true, example=null),
-     *             @OA\Property(property="first", type="string", example="/dieng/v1/comptes?page=1"),
-     *             @OA\Property(property="last", type="string", example="/dieng/v1/comptes?page=5")
+     *                 @OA\Property(property="self", type="string", example="/dieng/v1/comptes?page=1"),
+     *                 @OA\Property(property="next", type="string", example="/dieng/v1/comptes?page=2"),
+     *                 @OA\Property(property="previous", type="string", nullable=true, example=null),
+     *                 @OA\Property(property="first", type="string", example="/dieng/v1/comptes?page=1"),
+     *                 @OA\Property(property="last", type="string", example="/dieng/v1/comptes?page=5")
      *             )
      *         )
      *     ),
