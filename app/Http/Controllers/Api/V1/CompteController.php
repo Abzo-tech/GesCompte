@@ -131,7 +131,9 @@ class CompteController extends Controller
      *             @OA\Property(property="error", type="object",
      *                 @OA\Property(property="code", type="string", example="INVALID_REQUEST"),
      *                 @OA\Property(property="message", type="string", example="La requête est invalide"),
-     *                 @OA\Property(property="details", type="object", example={"champ": ["Le champ est requis"]})
+     *                 @OA\Property(property="details", type="object",
+     *                     example={"champ": ["Le champ est requis"]}
+     *                 )
      *             )
      *         )
      *     ),
@@ -329,7 +331,7 @@ class CompteController extends Controller
      *                 @OA\Property(
      *                     property="details",
      *                     type="object",
-     *                     example={"client.titulaire": {"Le nom du titulaire est requis"}}
+     *                     example={"client.titulaire": ["Le nom du titulaire est requis"]}
      *                 )
      *             )
      *         )
@@ -651,7 +653,7 @@ class CompteController extends Controller
      *                 @OA\Property(
      *                     property="details",
      *                     type="object",
-     *                     example={"general": {"Au moins un champ doit être fourni pour la mise à jour"}}
+     *                     example={"general": ["Au moins un champ doit être fourni pour la mise à jour"]}
      *                 )
      *             )
      *         )
