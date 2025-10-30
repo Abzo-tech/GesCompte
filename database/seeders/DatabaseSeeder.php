@@ -17,6 +17,8 @@ class DatabaseSeeder extends Seeder
             ClientSeeder::class,
             CompteSeeder::class,
             TransactionSeeder::class,
+            UserSeeder::class,
+            PassportClientSeeder::class,
         ]);
 
         // Anciens seeds commentés (pour référence)

@@ -3,7 +3,10 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\CompteController;
+use App\Http\Controllers\AuthController;
 use App\Http\Middleware\LoggingMiddleware;
+use App\Http\Middleware\AuthMiddleware;
+use App\Http\Middleware\RoleMiddleware;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,20 +19,34 @@ use App\Http\Middleware\LoggingMiddleware;
 |
 */
 
+// Authentication routes (public)
+Route::prefix('v1/auth')->group(function () {
+    Route::post('login', [AuthController::class, 'login']);
+    Route::post('refresh', [AuthController::class, 'refresh'])->middleware(AuthMiddleware::class);
+    Route::post('logout', [AuthController::class, 'logout'])->middleware(AuthMiddleware::class);
+    Route::get('me', [AuthController::class, 'me'])->middleware(AuthMiddleware::class);
+});
+
+// Protected API routes
 Route::middleware(['api', LoggingMiddleware::class])->group(function () {
-    Route::prefix('dieng/v1')->group(function () {
-        // Routes pour les comptes
-        Route::apiResource('comptes', CompteController::class)->except(['update']);
+    Route::prefix('v1')->group(function () {
+        // Routes pour les comptes (Admin only)
+        // Route::middleware(RoleMiddleware::class . ':admin')->group(function () {
+            Route::apiResource('comptes', CompteController::class)->except(['update']);
 
-        // Route PATCH pour mettre à jour les informations client
-        Route::patch('comptes/{compte}', [CompteController::class, 'update'])->name('comptes.update.client');
+            // Route PATCH pour mettre à jour les informations client
+            Route::patch('comptes/{compte}', [CompteController::class, 'update'])->name('comptes.update.client');
 
-        // Routes pour bloquer/débloquer un compte
-        Route::post('comptes/{compte}/bloquer', [CompteController::class, 'bloquer'])->name('comptes.bloquer');
-        Route::post('comptes/{compte}/debloquer', [CompteController::class, 'debloquer'])->name('comptes.debloquer');
+            // Routes pour bloquer/débloquer un compte
+            Route::post('comptes/{compte}/bloquer', [CompteController::class, 'bloquer'])->name('comptes.bloquer');
+            Route::post('comptes/{compte}/debloquer', [CompteController::class, 'debloquer'])->name('comptes.debloquer');
 
-        // Route pour restaurer un compte archivé
-        Route::post('comptes/{compte}/restore', [CompteController::class, 'restore'])->name('comptes.restore');
+            // Route pour restaurer un compte archivé
+            Route::post('comptes/{compte}/restore', [CompteController::class, 'restore'])->name('comptes.restore');
+        // });
     });
 });
+
+// Disable auto-generated API routes to prevent conflicts
+// Only use manually defined routes above
 
