@@ -774,38 +774,81 @@ class CompteController extends Controller
 
     /**
      * @OA\Delete(
-     *     path="/dieng/v1/comptes/{id}",
+     *     path="/api/v1/comptes/{compteId}",
      *     summary="Supprimer un compte (soft delete)",
+     *     description="Supprime un compte en effectuant un soft delete. Le compte sera marqué comme fermé avec une date de fermeture.",
      *     tags={"Comptes"},
+     *     security={{"bearerAuth": {}}},
      *     @OA\Parameter(
-     *         name="id",
+     *         name="compteId",
      *         in="path",
      *         required=true,
+     *         description="ID du compte à supprimer",
      *         @OA\Schema(type="string", format="uuid")
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Compte archivé"
+     *         description="Compte supprimé avec succès",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Compte supprimé avec succès"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000"),
+     *                 @OA\Property(property="numeroCompte", type="string", example="C00123456"),
+     *                 @OA\Property(property="statut", type="string", example="ferme"),
+     *                 @OA\Property(property="dateFermeture", type="string", format="date-time", example="2025-10-19T11:15:00Z")
+     *             )
+     *         )
      *     ),
      *     @OA\Response(
      *         response=404,
-     *         description="Compte non trouvé"
+     *         description="Compte non trouvé",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="code", type="string", example="COMPTE_NOT_FOUND"),
+     *                 @OA\Property(property="message", type="string", example="Le compte avec l'ID spécifié n'existe pas")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Erreur serveur",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="code", type="string", example="INTERNAL_ERROR"),
+     *                 @OA\Property(property="message", type="string", example="Erreur interne du serveur")
+     *             )
+     *         )
      *     )
      * )
      */
-    public function destroy($id): JsonResponse
+    public function destroy($compteId): JsonResponse
     {
         try {
-            $compte = Compte::findOrFail($id);
+            $compte = Compte::findOrFail($compteId);
+
+            // Effectuer le soft delete
             $compte->delete();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Compte archivé avec succès',
+                'message' => 'Compte supprimé avec succès',
                 'data' => [
-                    'compte_id' => $compte->id,
-                    'numero' => $compte->numero,
-                    'status' => 'archived'
+                    'id' => $compte->id,
+                    'numeroCompte' => $compte->numero,
+                    'statut' => 'ferme',
+                    'dateFermeture' => $compte->deleted_at->toISOString()
                 ]
             ], 200);
 
@@ -814,15 +857,21 @@ class CompteController extends Controller
                 'success' => false,
                 'error' => [
                     'code' => 'COMPTE_NOT_FOUND',
-                    'message' => 'Compte non trouvé'
+                    'message' => 'Le compte avec l\'ID spécifié n\'existe pas',
+                    'details' => [
+                        'compteId' => $compteId
+                    ]
                 ]
             ], 404);
         } catch (\Exception $e) {
+            \Log::error('Erreur lors de la suppression du compte: ' . $e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'error' => [
-                    'code' => 'ARCHIVE_ERROR',
-                    'message' => $e->getMessage()
+                    'code' => 'INTERNAL_ERROR',
+                    'message' => 'Erreur interne du serveur',
+                    'details' => config('app.debug') ? $e->getMessage() : null
                 ]
             ], 500);
         }
