@@ -36,7 +36,7 @@ Route::prefix('dieng/v1')->name('dieng.v1.')->middleware(['api', \App\Http\Middl
     Route::delete('clients/{client}', [ClientController::class, 'destroy']);
 
     // Routes des comptes (routes individuelles)
-    Route::get('comptes', [CompteController::class, 'index']);
+    Route::get('comptes', [CompteController::class, 'index'])->name('web.comptes.index');
     Route::get('comptes/{compte}', [CompteController::class, 'show']);
     Route::get('comptes/archives/list', [CompteController::class, 'archives']);
     Route::post('comptes', [CompteController::class, 'store']);

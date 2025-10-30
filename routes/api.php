@@ -32,7 +32,10 @@ Route::middleware(['api', LoggingMiddleware::class])->group(function () {
     Route::prefix('v1')->group(function () {
         // Routes pour les comptes (Admin only)
         // Route::middleware(RoleMiddleware::class . ':admin')->group(function () {
-            Route::apiResource('comptes', CompteController::class)->except(['update']);
+            Route::get('comptes', [CompteController::class, 'index'])->name('api.comptes.index');
+            Route::post('comptes', [CompteController::class, 'store'])->name('api.comptes.store');
+            Route::get('comptes/{compte}', [CompteController::class, 'show'])->name('api.comptes.show');
+            Route::delete('comptes/{compte}', [CompteController::class, 'destroy'])->name('api.comptes.destroy');
 
             // Route PATCH pour mettre à jour les informations client
             Route::patch('comptes/{compte}', [CompteController::class, 'update'])->name('comptes.update.client');
