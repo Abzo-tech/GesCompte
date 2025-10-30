@@ -978,7 +978,323 @@ class CompteController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/dieng/v1/comptes/{id}/restore",
+     *     path="/api/v1/comptes/{compteId}/bloquer",
+     *     summary="Bloquer un compte épargne",
+     *     description="Bloque un compte épargne actif en spécifiant le motif et la durée de blocage. Calcule automatiquement la date de déblocage prévue.",
+     *     tags={"Comptes"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="compteId",
+     *         in="path",
+     *         required=true,
+     *         description="ID du compte à bloquer",
+     *         @OA\Schema(type="string", format="uuid")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"motif", "duree", "unite"},
+     *             @OA\Property(property="motif", type="string", description="Motif du blocage", example="Activité suspecte détectée"),
+     *             @OA\Property(property="duree", type="integer", description="Durée du blocage", example=30),
+     *             @OA\Property(property="unite", type="string", enum={"jours", "semaines", "mois"}, description="Unité de temps", example="mois")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Compte bloqué avec succès",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Compte bloqué avec succès"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000"),
+     *                 @OA\Property(property="statut", type="string", example="bloque"),
+     *                 @OA\Property(property="motifBlocage", type="string", example="Activité suspecte détectée"),
+     *                 @OA\Property(property="dateBlocage", type="string", format="date-time", example="2025-10-19T11:20:00Z"),
+     *                 @OA\Property(property="dateDeblocagePrevue", type="string", format="date-time", example="2025-11-18T11:20:00Z")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Erreur de validation ou compte non éligible au blocage",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="code", type="string", example="ACCOUNT_NOT_ELIGIBLE"),
+     *                 @OA\Property(property="message", type="string", example="Seuls les comptes épargne actifs peuvent être bloqués")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Compte non trouvé",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="code", type="string", example="COMPTE_NOT_FOUND"),
+     *                 @OA\Property(property="message", type="string", example="Le compte avec l'ID spécifié n'existe pas")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Erreur serveur",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="code", type="string", example="INTERNAL_ERROR"),
+     *                 @OA\Property(property="message", type="string", example="Erreur interne du serveur")
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function bloquer(\App\Http\Requests\BlockAccountRequest $request, $compteId): JsonResponse
+    {
+        try {
+            $compte = Compte::findOrFail($compteId);
+
+            // Vérifier que c'est un compte épargne actif
+            if ($compte->type !== 'epargne' || $compte->statut !== 'actif') {
+                return response()->json([
+                    'success' => false,
+                    'error' => [
+                        'code' => 'ACCOUNT_NOT_ELIGIBLE',
+                        'message' => 'Seuls les comptes épargne actifs peuvent être bloqués',
+                        'details' => [
+                            'compteId' => $compteId,
+                            'type' => $compte->type,
+                            'statut' => $compte->statut
+                        ]
+                    ]
+                ], 400);
+            }
+
+            $validated = $request->validated();
+
+            // Calculer la date de déblocage prévue
+            $dateBlocage = now();
+            $dateDeblocagePrevue = $this->calculateUnblockDate($dateBlocage, $validated['duree'], $validated['unite']);
+
+            // Mettre à jour le compte
+            $compte->update([
+                'statut' => 'bloque',
+                'motif_blocage' => $validated['motif'],
+                'date_blocage' => $dateBlocage,
+                'date_deblocage_prevue' => $dateDeblocagePrevue,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Compte bloqué avec succès',
+                'data' => [
+                    'id' => $compte->id,
+                    'statut' => $compte->statut,
+                    'motifBlocage' => $compte->motif_blocage,
+                    'dateBlocage' => $compte->date_blocage->toISOString(),
+                    'dateDeblocagePrevue' => $compte->date_deblocage_prevue->toISOString()
+                ]
+            ], 200);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => 'COMPTE_NOT_FOUND',
+                    'message' => 'Le compte avec l\'ID spécifié n\'existe pas',
+                    'details' => [
+                        'compteId' => $compteId
+                    ]
+                ]
+            ], 404);
+        } catch (\Exception $e) {
+            \Log::error('Erreur lors du blocage du compte: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => 'INTERNAL_ERROR',
+                    'message' => 'Erreur interne du serveur',
+                    'details' => config('app.debug') ? $e->getMessage() : null
+                ]
+            ], 500);
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/v1/comptes/{compteId}/debloquer",
+     *     summary="Débloquer un compte épargne",
+     *     description="Débloque un compte épargne bloqué en spécifiant le motif de déblocage.",
+     *     tags={"Comptes"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="compteId",
+     *         in="path",
+     *         required=true,
+     *         description="ID du compte à débloquer",
+     *         @OA\Schema(type="string", format="uuid")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"motif"},
+     *             @OA\Property(property="motif", type="string", description="Motif du déblocage", example="Vérification complétée")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Compte débloqué avec succès",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Compte débloqué avec succès"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="string", format="uuid", example="550e8400-e29b-41d4-a716-446655440000"),
+     *                 @OA\Property(property="statut", type="string", example="actif"),
+     *                 @OA\Property(property="dateDeblocage", type="string", format="date-time", example="2025-10-19T12:00:00Z")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Erreur de validation ou compte non éligible au déblocage",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="code", type="string", example="ACCOUNT_NOT_ELIGIBLE"),
+     *                 @OA\Property(property="message", type="string", example="Seuls les comptes épargne bloqués peuvent être débloqués")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Compte non trouvé",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="code", type="string", example="COMPTE_NOT_FOUND"),
+     *                 @OA\Property(property="message", type="string", example="Le compte avec l'ID spécifié n'existe pas")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Erreur serveur",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="object",
+     *                 @OA\Property(property="code", type="string", example="INTERNAL_ERROR"),
+     *                 @OA\Property(property="message", type="string", example="Erreur interne du serveur")
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function debloquer(\App\Http\Requests\UnblockAccountRequest $request, $compteId): JsonResponse
+    {
+        try {
+            $compte = Compte::findOrFail($compteId);
+
+            // Vérifier que c'est un compte épargne bloqué
+            if ($compte->type !== 'epargne' || $compte->statut !== 'bloque') {
+                return response()->json([
+                    'success' => false,
+                    'error' => [
+                        'code' => 'ACCOUNT_NOT_ELIGIBLE',
+                        'message' => 'Seuls les comptes épargne bloqués peuvent être débloqués',
+                        'details' => [
+                            'compteId' => $compteId,
+                            'type' => $compte->type,
+                            'statut' => $compte->statut
+                        ]
+                    ]
+                ], 400);
+            }
+
+            $validated = $request->validated();
+
+            // Mettre à jour le compte
+            $compte->update([
+                'statut' => 'actif',
+                'motif_deblocage' => $validated['motif'],
+                'date_deblocage_prevue' => null, // Réinitialiser la date prévue
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Compte débloqué avec succès',
+                'data' => [
+                    'id' => $compte->id,
+                    'statut' => $compte->statut,
+                    'dateDeblocage' => now()->toISOString()
+                ]
+            ], 200);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => 'COMPTE_NOT_FOUND',
+                    'message' => 'Le compte avec l\'ID spécifié n\'existe pas',
+                    'details' => [
+                        'compteId' => $compteId
+                    ]
+                ]
+            ], 404);
+        } catch (\Exception $e) {
+            \Log::error('Erreur lors du déblocage du compte: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => 'INTERNAL_ERROR',
+                    'message' => 'Erreur interne du serveur',
+                    'details' => config('app.debug') ? $e->getMessage() : null
+                ]
+            ], 500);
+        }
+    }
+
+    /**
+     * Calculate unblock date based on duration and unit
+     */
+    private function calculateUnblockDate(\Carbon\Carbon $startDate, int $duration, string $unit): \Carbon\Carbon
+    {
+        return match ($unit) {
+            'jours' => $startDate->copy()->addDays($duration),
+            'semaines' => $startDate->copy()->addWeeks($duration),
+            'mois' => $startDate->copy()->addMonths($duration),
+            default => $startDate->copy()->addDays($duration)
+        };
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/v1/comptes/{id}/restore",
      *     summary="Restaurer un compte archivé",
      *     tags={"Comptes"},
      *     @OA\Parameter(

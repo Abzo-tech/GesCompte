@@ -27,6 +27,8 @@ class CompteResource extends JsonResource
             'dateCreation' => optional($this->date_creation)->toIso8601String(),
             'statut' => $this->statut,
             'motifBlocage' => $this->statut === 'bloque' ? ($this->motif_blocage ?? 'Raison non spécifiée') : null,
+            'dateBlocage' => $this->when($this->statut === 'bloque', optional($this->date_blocage)->toIso8601String()),
+            'dateDeblocagePrevue' => $this->when($this->statut === 'bloque', optional($this->date_deblocage_prevue)->toIso8601String()),
             'dateFermeture' => $this->when($this->trashed(), optional($this->deleted_at)->toIso8601String()),
             'metadata' => [
                 'derniereModification' => optional($this->updated_at)->toIso8601String(),

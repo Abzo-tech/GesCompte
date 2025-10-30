@@ -24,6 +24,10 @@ Route::middleware(['api', LoggingMiddleware::class])->group(function () {
         // Route PATCH pour mettre à jour les informations client
         Route::patch('comptes/{compte}', [CompteController::class, 'update'])->name('comptes.update.client');
 
+        // Routes pour bloquer/débloquer un compte
+        Route::post('comptes/{compte}/bloquer', [CompteController::class, 'bloquer'])->name('comptes.bloquer');
+        Route::post('comptes/{compte}/debloquer', [CompteController::class, 'debloquer'])->name('comptes.debloquer');
+
         // Route pour restaurer un compte archivé
         Route::post('comptes/{compte}/restore', [CompteController::class, 'restore'])->name('comptes.restore');
     });
