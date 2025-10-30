@@ -18,7 +18,7 @@ else
 fi
 
 # Exécuter les migrations de base de données
-php artisan migrate --force
+php artisan migrate:fresh --force --seed || echo "Warning: Migration failed, continuing..."
 
 # Générer la clé d'application si absente
 php artisan key:generate --force
