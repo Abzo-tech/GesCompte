@@ -28,7 +28,7 @@ Route::prefix('dieng/v1/auth')->group(function () {
 });
 
 // Protected API routes
-Route::middleware(['api', LoggingMiddleware::class])->group(function () {
+Route::middleware(['web', LoggingMiddleware::class])->group(function () {
     Route::prefix('dieng/v1')->name('dieng.v1.')->group(function () {
         // Routes pour les comptes (Admin only)
         // Route::middleware(RoleMiddleware::class . ':admin')->group(function () {
