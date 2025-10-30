@@ -24,6 +24,7 @@ php artisan migrate --force
 php artisan key:generate --force
 
 # Mettre en cache config, routes et views
+php artisan view:clear
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
