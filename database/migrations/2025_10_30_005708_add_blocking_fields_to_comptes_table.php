@@ -11,11 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('comptes', function (Blueprint $table) {
-            $table->timestamp('date_blocage')->nullable();
-            $table->timestamp('date_deblocage_prevue')->nullable();
-            $table->string('motif_deblocage')->nullable();
-        });
+        if (Schema::hasTable('comptes')) {
+            Schema::table('comptes', function (Blueprint $table) {
+                $table->timestamp('date_blocage')->nullable();
+                $table->timestamp('date_deblocage_prevue')->nullable();
+                $table->string('motif_deblocage')->nullable();
+            });
+        }
     }
 
     /**

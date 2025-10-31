@@ -17,7 +17,8 @@ services:
       echo "Proceeding with migrations..."
 
       # Exécution des migrations (le --force est nécessaire en production)
-      php artisan migrate --force --seed
+      # Nettoyer et recréer la base de données
+      php artisan migrate:fresh --force --seed
 
       # Mise en cache pour la production
       php artisan config:cache

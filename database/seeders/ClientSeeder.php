@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class ClientSeeder extends Seeder
@@ -14,9 +15,9 @@ class ClientSeeder extends Seeder
     public function run(): void
     {
         // Création de clients variés pour les tests
-        \App\Models\Client::factory(10)->create();
+        // \App\Models\Client::factory(10)->create();
 
-        // Création d'un client spécifique pour les tests avec UUID connu
+        // Création d'un client spécifique pour les tests
         \App\Models\Client::create([
             'id' => '550e8400-e29b-41d4-a716-446655440000',
             'nom' => 'Martin',

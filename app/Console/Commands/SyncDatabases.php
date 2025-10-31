@@ -72,15 +72,49 @@ class SyncDatabases extends Command
                 return;
             }
 
-            // Insérer les données dans la destination
-            $chunks = $data->chunk(100); // Traiter par lots de 100
+            // Insérer les données dans la destination par enregistrement individuel
+            // pour éviter les problèmes de types avec les UUIDs
+            $successCount = 0;
+            $errorCount = 0;
 
-            foreach ($chunks as $chunk) {
-                $records = $chunk->map(function ($item) {
-                    return (array) $item;
-                })->toArray();
+            foreach ($data as $record) {
+                try {
+                    DB::connection($to)->table($table)->insert((array) $record);
+                    $successCount++;
+                } catch (\Exception $e) {
+                    $errorMessage = $e->getMessage();
+                    $errorCount++;
 
-                DB::connection($to)->table($table)->insert($records);
+                    // Si c'est une erreur de type UUID/BIGINT, recréer la table
+                    if (str_contains($errorMessage, 'invalid input syntax for type bigint')) {
+
+                        $this->warn("🔄 Erreur de type détectée, recréation de la table {$table}...");
+
+                        // Supprimer et recréer la table
+                        DB::connection($to)->statement("DROP TABLE IF EXISTS \"{$table}\" CASCADE");
+                        $this->createTableFromSource($table, $from, $to);
+
+                        // Réessayer l'insertion par enregistrement individuel
+                        $this->info("📋 Nouvelle tentative d'insertion des données...");
+                        $retrySuccess = 0;
+                        foreach ($data as $record) {
+                            try {
+                                DB::connection($to)->table($table)->insert((array) $record);
+                                $retrySuccess++;
+                            } catch (\Exception $retryError) {
+                                $this->warn("⚠️  Échec réinsertion ID {$record->id}: " . $retryError->getMessage());
+                            }
+                        }
+                        $this->info("✅ {$retrySuccess} enregistrements insérés après recréation de table");
+                        return;
+                    } else {
+                        $this->warn("⚠️  Échec insertion enregistrement ID {$record->id}: " . $errorMessage);
+                    }
+                }
+            }
+
+            if ($errorCount > 0) {
+                $this->warn("⚠️  {$errorCount} enregistrements ont échoué sur {$data->count()}");
             }
 
             $this->info("✅ {$data->count()} enregistrements synchronisés pour {$table}");
@@ -92,24 +126,108 @@ class SyncDatabases extends Command
 
     private function createTableFromSource($table, $from, $to)
     {
-        // Utiliser les migrations Laravel pour créer les tables
-        $this->info("📋 Utilisation des migrations Laravel pour créer la table {$table}");
+        // Créer la table en copiant la structure depuis la source
+        $this->info("📋 Création de la table {$table} en copiant la structure depuis {$from}");
 
-        // Exécuter les migrations spécifiques à cette table
-        $migrationFiles = [
-            'clients' => '2025_10_27_154138_create_clients_table',
-            'comptes' => '2025_10_27_172607_create_comptes_table',
-            'transactions' => '2025_10_28_161558_create_transactions_table'
-        ];
+        try {
+            // Obtenir la structure de la table source
+            $columns = DB::connection($from)->select("
+                SELECT column_name, data_type, is_nullable, column_default
+                FROM information_schema.columns
+                WHERE table_name = ? AND table_schema = 'public'
+                ORDER BY ordinal_position
+            ", [$table]);
 
-        if (isset($migrationFiles[$table])) {
-            $this->call('migrate', [
-                '--database' => $to,
-                '--path' => "database/migrations/{$migrationFiles[$table]}.php",
-                '--force' => true
-            ]);
-        } else {
-            throw new \Exception("Migration non trouvée pour la table {$table}");
+            if (empty($columns)) {
+                throw new \Exception("Impossible d'obtenir la structure de la table {$table}");
+            }
+
+            // Construire la requête CREATE TABLE
+            $createSql = $this->buildCreateTableSql($table, $columns);
+
+            // Exécuter la création de table dans la destination
+            DB::connection($to)->statement($createSql);
+
+            $this->info("✅ Table {$table} créée avec succès dans {$to}");
+
+        } catch (\Exception $e) {
+            $this->error("❌ Erreur lors de la création de la table {$table}: " . $e->getMessage());
+            throw $e;
         }
+    }
+
+    private function buildCreateTableSql($tableName, $columns)
+    {
+        $sql = "CREATE TABLE IF NOT EXISTS \"{$tableName}\" (";
+
+        $columnDefs = [];
+        $primaryKey = null;
+
+        foreach ($columns as $column) {
+            $colDef = "\"{$column->column_name}\" ";
+
+            // Mapper les types PostgreSQL vers SQL standard
+            switch ($column->data_type) {
+                case 'uuid':
+                    $colDef .= 'UUID';
+                    if ($column->column_name === 'id') {
+                        $primaryKey = 'id';
+                    }
+                    break;
+                case 'integer':
+                    $colDef .= 'INTEGER';
+                    break;
+                case 'bigint':
+                    $colDef .= 'BIGINT';
+                    break;
+                case 'character varying':
+                case 'varchar':
+                    $colDef .= 'VARCHAR(255)';
+                    break;
+                case 'text':
+                    $colDef .= 'TEXT';
+                    break;
+                case 'timestamp without time zone':
+                    $colDef .= 'TIMESTAMP';
+                    break;
+                case 'boolean':
+                    $colDef .= 'BOOLEAN';
+                    break;
+                case 'json':
+                    $colDef .= 'JSON';
+                    break;
+                default:
+                    $colDef .= 'VARCHAR(255)'; // fallback
+            }
+
+            if ($column->is_nullable === 'NO') {
+                $colDef .= ' NOT NULL';
+            }
+
+            // Simplifier les valeurs par défaut pour éviter les problèmes de séquences
+            if ($column->column_default !== null && !str_contains($column->column_default, 'nextval')) {
+                // Échapper les valeurs par défaut simples
+                if (str_contains($column->column_default, '::')) {
+                    $defaultValue = explode('::', $column->column_default)[0];
+                    $colDef .= " DEFAULT {$defaultValue}";
+                }
+            }
+
+            $columnDefs[] = $colDef;
+        }
+
+        // Ajouter la clé primaire si elle existe
+        if ($primaryKey) {
+            $sql .= implode(', ', $columnDefs) . ", PRIMARY KEY (\"{$primaryKey}\")";
+        } else {
+            $sql .= implode(', ', $columnDefs);
+        }
+
+        $sql .= ')';
+
+        // Debug: Afficher le SQL généré
+        $this->info("🔍 SQL généré: " . $sql);
+
+        return $sql;
     }
 }

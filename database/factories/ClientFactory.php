@@ -18,13 +18,15 @@ class ClientFactory extends Factory
     public function definition(): array
     {
         return [
-            'id' => Str::uuid(),
+            'id' => (string) \Illuminate\Support\Str::uuid(),
             'nom' => $this->faker->lastName(),
             'prenom' => $this->faker->firstName(),
             'email' => $this->faker->unique()->safeEmail(),
             'telephone' => $this->faker->phoneNumber(),
             'adresse' => $this->faker->address(),
             'statut' => $this->faker->randomElement(['actif', 'inactif', 'suspendu']),
+            'password' => bcrypt('password123'),
+            'code_verification' => strtoupper($this->faker->bothify('??????')),
         ];
     }
 }

@@ -11,10 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('clients', function (Blueprint $table) {
-            $table->string('password')->nullable();
-            $table->string('code_verification', 10)->nullable();
-        });
+        if (Schema::hasTable('clients')) {
+            Schema::table('clients', function (Blueprint $table) {
+                $table->string('password')->nullable();
+                $table->string('code_verification', 10)->nullable();
+            });
+        }
     }
 
     /**
