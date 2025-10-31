@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Skipping users table creation as not needed for this API project
+        // Skip this migration as we have a custom users table with UUIDs
     }
 
     /**
