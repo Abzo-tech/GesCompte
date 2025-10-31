@@ -231,7 +231,7 @@ class CompteController extends Controller
             // Formatage de la réponse
             return response()->json([
                 'success' => true,
-                'data' => CompteResource::collection($comptes),
+                'data' => CompteResource::collection($comptes->getCollection()),
                 'pagination' => [
                     'currentPage' => $comptes->currentPage(),
                     'totalPages' => $comptes->lastPage(),

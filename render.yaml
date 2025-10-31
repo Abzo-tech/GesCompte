@@ -13,7 +13,7 @@ services:
 
       # Attendre que la base de données soit prête avant les migrations
       echo "Waiting for database connection..."
-      sleep 10
+      sleep 20
       echo "Proceeding with migrations..."
 
       # Exécution des migrations (le --force est nécessaire en production)
