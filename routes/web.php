@@ -21,7 +21,7 @@ Route::get('/', function () {
 });
 
 // Routes API V1
-Route::prefix('dieng/v1')->name('dieng.v1.')->middleware(['web', \App\Http\Middleware\LoggingMiddleware::class])->group(function () {
+Route::prefix('v1')->middleware([\App\Http\Middleware\LoggingMiddleware::class])->group(function () {
 
     // Route de test simple
     Route::get('test', function() {

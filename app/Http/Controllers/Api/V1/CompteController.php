@@ -33,7 +33,7 @@ class CompteController extends Controller
 {
     /**
      * @OA\Get(
-     *     path="/dieng/v1/comptes",
+     *     path="/v1/comptes",
      *     summary="Lister tous les comptes",
      *     description="Récupère la liste des comptes avec pagination, filtrage et tri",
      *     tags={"Comptes"},
@@ -115,11 +115,11 @@ class CompteController extends Controller
      *             @OA\Property(
      *                 property="links",
      *                 type="object",
-     *                 @OA\Property(property="self", type="string", example="/dieng/v1/comptes?page=1"),
-     *                 @OA\Property(property="next", type="string", example="/dieng/v1/comptes?page=2"),
+     *                 @OA\Property(property="self", type="string", example="/v1/comptes?page=1"),
+     *                 @OA\Property(property="next", type="string", example="/v1/comptes?page=2"),
      *                 @OA\Property(property="previous", type="string", nullable=true, example=null),
-     *                 @OA\Property(property="first", type="string", example="/dieng/v1/comptes?page=1"),
-     *                 @OA\Property(property="last", type="string", example="/dieng/v1/comptes?page=5")
+     *                 @OA\Property(property="first", type="string", example="/v1/comptes?page=1"),
+     *                 @OA\Property(property="last", type="string", example="/v1/comptes?page=5")
      *             )
      *         )
      *     ),
@@ -266,7 +266,7 @@ class CompteController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/dieng/v1/comptes",
+     *     path="/v1/comptes",
      *     summary="Créer un nouveau compte",
      *     tags={"Comptes"},
      *     @OA\RequestBody(
@@ -457,7 +457,7 @@ class CompteController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/dieng/v1/comptes/{compteId}",
+     *     path="/v1/comptes/{compteId}",
      *     summary="Récupérer un compte spécifique",
      *     description="Permet à l'admin et au client de récupérer les détails d'un compte spécifique. Recherche d'abord en local (comptes cheque/epargne actifs), puis en serverless si non trouvé.",
      *     tags={"Comptes"},
@@ -585,7 +585,7 @@ class CompteController extends Controller
 
     /**
      * @OA\Patch(
-     *     path="/dieng/v1/comptes/{compteId}",
+     *     path="/v1/comptes/{compteId}",
      *     summary="Mettre à jour les informations du client",
      *     description="Permet de mettre à jour les informations du client associé à un compte. Tous les champs sont optionnels mais au moins un champ doit être fourni.",
      *     tags={"Comptes"},
@@ -776,7 +776,7 @@ class CompteController extends Controller
 
     /**
      * @OA\Delete(
-     *     path="/api/v1/comptes/{compteId}",
+     *     path="/v1/comptes/{compteId}",
      *     summary="Supprimer un compte (soft delete)",
      *     description="Supprime un compte en effectuant un soft delete. Le compte sera marqué comme fermé avec une date de fermeture.",
      *     tags={"Comptes"},
@@ -881,7 +881,7 @@ class CompteController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/dieng/v1/comptes/archives/list",
+     *     path="/v1/comptes/archives/list",
      *     summary="Lister les comptes archivés",
      *     tags={"Comptes"},
      *     @OA\Parameter(
@@ -980,7 +980,7 @@ class CompteController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/v1/comptes/{compteId}/bloquer",
+     *     path="/v1/comptes/{compteId}/bloquer",
      *     summary="Bloquer un compte épargne",
      *     description="Bloque un compte épargne actif en spécifiant le motif et la durée de blocage. Calcule automatiquement la date de déblocage prévue.",
      *     tags={"Comptes"},
@@ -1137,7 +1137,7 @@ class CompteController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/v1/comptes/{compteId}/debloquer",
+     *     path="/v1/comptes/{compteId}/debloquer",
      *     summary="Débloquer un compte épargne",
      *     description="Débloque un compte épargne bloqué en spécifiant le motif de déblocage.",
      *     tags={"Comptes"},
@@ -1296,7 +1296,7 @@ class CompteController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/v1/comptes/{id}/restore",
+     *     path="/v1/comptes/{id}/restore",
      *     summary="Restaurer un compte archivé",
      *     tags={"Comptes"},
      *     @OA\Parameter(

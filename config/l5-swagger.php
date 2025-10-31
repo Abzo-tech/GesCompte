@@ -16,7 +16,10 @@ return [
                 'docs' => 'dieng/docs',
                 'oauth2_callback' => 'dieng/oauth2-callback',
                 'middleware' => [
-                    'api' => ['web'],
+                    'api' => [],
+                    'asset' => [],
+                    'docs' => [],
+                    'oauth2_callback' => [],
                 ]
             ],
             'paths' => [
@@ -72,10 +75,10 @@ return [
              * Middleware allows to prevent unexpected access to API documentation
              */
             'middleware' => [
-                'api' => [],
-                'asset' => [],
-                'docs' => [],
-                'oauth2_callback' => [],
+                'api' => ['web'],
+                'asset' => ['web'],
+                'docs' => ['web'],
+                'oauth2_callback' => ['web'],
             ],
 
             /*
@@ -98,7 +101,7 @@ return [
             /*
              * Edit to set the api's base path
              */
-            'base' => env('L5_SWAGGER_BASE_PATH', '/dieng/v1'),
+            'base' => env('L5_SWAGGER_BASE_PATH', '/v1'),
 
             /*
              * Absolute path to directories that should be excluded from scanning

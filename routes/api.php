@@ -20,7 +20,7 @@ use App\Http\Middleware\RoleMiddleware;
 */
 
 // Authentication routes (public)
-Route::prefix('dieng/v1/auth')->group(function () {
+Route::prefix('v1/auth')->group(function () {
     Route::post('login', [AuthController::class, 'login']);
     Route::post('refresh', [AuthController::class, 'refresh'])->middleware(AuthMiddleware::class);
     Route::post('logout', [AuthController::class, 'logout'])->middleware(AuthMiddleware::class);
@@ -28,8 +28,8 @@ Route::prefix('dieng/v1/auth')->group(function () {
 });
 
 // Protected API routes
-Route::middleware(['web', LoggingMiddleware::class])->group(function () {
-    Route::prefix('dieng/v1')->name('dieng.v1.')->group(function () {
+Route::middleware([LoggingMiddleware::class])->group(function () {
+    Route::prefix('v1')->group(function () {
         // Routes pour les comptes (Admin only)
         // Route::middleware(RoleMiddleware::class . ':admin')->group(function () {
             Route::get('comptes', [CompteController::class, 'index'])->name('comptes.index');
