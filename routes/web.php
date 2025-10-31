@@ -21,7 +21,7 @@ Route::get('/', function () {
 });
 
 // Routes API V1
-Route::prefix('v1')->middleware([\App\Http\Middleware\LoggingMiddleware::class])->group(function () {
+Route::prefix('api/v1')->middleware([\App\Http\Middleware\LoggingMiddleware::class])->group(function () {
 
     // Route de test simple
     Route::get('test', function() {

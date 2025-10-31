@@ -12,9 +12,9 @@ return [
                 /*
                  * Route for accessing api documentation interface
                  */
-                'api' => 'dieng/documentation',
-                'docs' => 'dieng/docs',
-                'oauth2_callback' => 'dieng/oauth2-callback',
+                'api' => 'api/documentation',
+                'docs' => 'api/docs',
+                'oauth2_callback' => 'api/oauth2-callback',
                 'middleware' => [
                     'api' => [],
                     'asset' => [],
@@ -101,7 +101,7 @@ return [
             /*
              * Edit to set the api's base path
              */
-            'base' => env('L5_SWAGGER_BASE_PATH', '/v1'),
+            'base' => env('L5_SWAGGER_BASE_PATH', '/'),
 
             /*
              * Absolute path to directories that should be excluded from scanning
