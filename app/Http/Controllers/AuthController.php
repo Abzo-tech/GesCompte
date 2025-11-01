@@ -17,6 +17,21 @@ use Laravel\Passport\Token;
  *     description="API Endpoints for user authentication"
  * )
  */
+
+/**
+ * @OA\Schema(
+ *     schema="User",
+ *     title="User",
+ *     description="User model with roles",
+ *     @OA\Property(property="id", type="string", format="uuid", description="User ID"),
+ *     @OA\Property(property="name", type="string", description="User full name"),
+ *     @OA\Property(property="email", type="string", format="email", description="User email"),
+ *     @OA\Property(property="is_active", type="boolean", description="User active status"),
+ *     @OA\Property(property="roles", type="array", @OA\Items(type="string"), description="User role names"),
+ *     @OA\Property(property="created_at", type="string", format="date-time"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time")
+ * )
+ */
 class AuthController extends Controller
 {
     /**
@@ -86,7 +101,7 @@ class AuthController extends Controller
                 'success' => true,
                 'message' => 'Login successful',
                 'data' => [
-                    'user' => $user,
+                    'user' => $user->load('roles'),
                     'access_token' => $token->accessToken,
                     'refresh_token' => $token->accessToken, // For simplicity, using same token
                     'token_type' => 'Bearer',

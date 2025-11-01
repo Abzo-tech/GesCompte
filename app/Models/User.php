@@ -33,7 +33,6 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'role',
         'is_active',
     ];
 
@@ -81,11 +80,49 @@ class User extends Authenticatable
     }
 
     /**
+     * Get user roles.
+     */
+    public function roles()
+    {
+        return $this->belongsToMany(Role::class, 'user_roles');
+    }
+
+    /**
      * Check if user has specific role
      */
     public function hasRole(string $role): bool
     {
-        return $this->role === $role;
+        return $this->roles()->where('name', $role)->exists();
+    }
+
+    /**
+     * Check if user has any of the specified roles
+     */
+    public function hasAnyRole(array $roles): bool
+    {
+        return $this->roles()->whereIn('name', $roles)->exists();
+    }
+
+    /**
+     * Assign role to user
+     */
+    public function assignRole(string $roleName): void
+    {
+        $role = Role::where('name', $roleName)->first();
+        if ($role && !$this->hasRole($roleName)) {
+            $this->roles()->attach($role->id);
+        }
+    }
+
+    /**
+     * Remove role from user
+     */
+    public function removeRole(string $roleName): void
+    {
+        $role = Role::where('name', $roleName)->first();
+        if ($role) {
+            $this->roles()->detach($role->id);
+        }
     }
 
     /**
@@ -105,6 +142,19 @@ class User extends Authenticatable
     }
 
     /**
+     * Check if user has specific permission
+     */
+    public function hasPermission(string $permission): bool
+    {
+        foreach ($this->roles as $role) {
+            if ($role->hasPermission($permission)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Scope for active users
      */
     public function scopeActive($query)
@@ -117,6 +167,18 @@ class User extends Authenticatable
      */
     public function scopeWithRole($query, string $role)
     {
-        return $query->where('role', $role);
+        return $query->whereHas('roles', function ($q) use ($role) {
+            $q->where('name', $role);
+        });
+    }
+
+    /**
+     * Scope for users with specific permission
+     */
+    public function scopeWithPermission($query, string $permission)
+    {
+        return $query->whereHas('roles', function ($q) use ($permission) {
+            $q->whereJsonContains('permissions', $permission);
+        });
     }
 }

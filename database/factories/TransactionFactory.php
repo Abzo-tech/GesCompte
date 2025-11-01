@@ -25,7 +25,7 @@ class TransactionFactory extends Factory
             'description' => $this->faker->sentence(),
             'beneficiaire' => $type === 'virement' ? $this->faker->name() : null,
             'date_transaction' => $this->faker->dateTimeBetween('-6 months', 'now'),
-            'compte_id' => \App\Models\Compte::factory(),
+            'compte_id' => \App\Models\Compte::inRandomOrder()->first()?->id ?? \App\Models\Compte::factory(),
         ];
     }
 }

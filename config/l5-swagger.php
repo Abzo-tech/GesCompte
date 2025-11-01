@@ -5,7 +5,17 @@ return [
     'documentations' => [
         'default' => [
             'api' => [
-                'title' => 'Aboubakry Dieng Ges-Compte API',
+                'title' => 'GesBanque - API de Gestion Bancaire',
+                'description' => 'API REST complète pour la gestion des comptes bancaires, clients et transactions. Développée avec Laravel et déployée sur Render avec base de données PostgreSQL.',
+                'version' => '1.0.0',
+                'contact' => [
+                    'name' => 'Aboubakry Dieng',
+                    'email' => 'contact@gesbanque.com'
+                ],
+                'license' => [
+                    'name' => 'MIT',
+                    'url' => 'https://opensource.org/licenses/MIT'
+                ],
             ],
 
             'routes' => [
@@ -27,7 +37,7 @@ return [
                  * Edit to include full URL in ui for assets
                  */
                 'use_absolute_path' => false,
-                'base' => 'dieng',
+                'base' => env('APP_URL', 'https://gesbanque.onrender.com'),
 
                 /*
                 * Edit to set path where swagger ui assets should be stored
@@ -101,7 +111,7 @@ return [
             /*
              * Edit to set the api's base path
              */
-            'base' => env('L5_SWAGGER_BASE_PATH', '/'),
+            'base' => env('L5_SWAGGER_BASE_PATH', '/api/v1'),
 
             /*
              * Absolute path to directories that should be excluded from scanning
@@ -220,27 +230,23 @@ return [
                         ],
                     ],
                 ],
-                'sanctum' => [ // Unique name of security
-                    'type' => 'apiKey', // Valid values are "basic", "apiKey" or "oauth2".
-                    'description' => 'Enter token in format (Bearer <token>)',
-                    'name' => 'Authorization', // The name of the header or query parameter to be used.
-                    'in' => 'header', // The location of the API key. Valid values are "query" or "header".
+                'bearerAuth' => [
+                    'type' => 'http',
+                    'scheme' => 'bearer',
+                    'bearerFormat' => 'JWT',
+                    'description' => 'Authentification Bearer Token - Utilisez le format: Bearer {token}'
+                ],
+                'sanctum' => [
+                    'type' => 'apiKey',
+                    'description' => 'Laravel Sanctum token - Utilisez le format: Bearer {token}',
+                    'name' => 'Authorization',
+                    'in' => 'header',
                 ],
                 */
             ],
             'security' => [
-                /*
-                 * Examples of Securities
-                 */
                 [
-                    /*
-                    'oauth2_security_example' => [
-                        'read',
-                        'write'
-                    ],
-
-                    'passport' => []
-                    */
+                    'bearerAuth' => []
                 ],
             ],
         ],
@@ -293,7 +299,7 @@ return [
                  * 'full' (expands the tags and operations),
                  * 'none' (expands nothing).
                  */
-                'doc_expansion' => env('L5_SWAGGER_UI_DOC_EXPANSION', 'none'),
+                'doc_expansion' => env('L5_SWAGGER_UI_DOC_EXPANSION', 'list'),
 
                 /**
                  * If set, enables filtering. The top bar will show an edit box that

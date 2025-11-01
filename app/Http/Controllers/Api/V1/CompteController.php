@@ -126,16 +126,7 @@ class CompteController extends Controller
      *     @OA\Response(
      *         response=400,
      *         description="Requête invalide",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(property="error", type="object",
-     *                 @OA\Property(property="code", type="string", example="INVALID_REQUEST"),
-     *                 @OA\Property(property="message", type="string", example="La requête est invalide"),
-     *                 @OA\Property(property="details", type="object",
-     *                     example={"champ": ["Le champ est requis"]}
-     *                 )
-     *             )
-     *         )
+     *         @OA\JsonContent(ref="#/components/schemas/ErrorResponse")
      *     ),
      *     @OA\Response(
      *         response=429,
@@ -163,10 +154,19 @@ class CompteController extends Controller
                     ]
                 ], 500);
             }
+
+            $user = $request->user();
             $perPage = min($request->input('limit', 10), 100); // Limite à 100 par page
             $page = $request->input('page', 1);
 
             $query = Compte::with('client');
+
+            // Filtrage par rôle utilisateur
+            if ($user && $user->hasRole('client')) {
+                // Client ne voit que ses propres comptes
+                $query->where('client_id', $user->id);
+            }
+            // Admin voit tous les comptes (pas de filtrage supplémentaire)
 
             // Filtres explicites
             if ($request->filled('type')) {
@@ -331,7 +331,7 @@ class CompteController extends Controller
      *                 @OA\Property(
      *                     property="details",
      *                     type="object",
-     *                     example={"client.titulaire": ["Le nom du titulaire est requis"]}
+     *                     description="Détails des erreurs de validation par champ"
      *                 )
      *             )
      *         )
@@ -531,25 +531,44 @@ class CompteController extends Controller
      *     )
      * )
      */
-    public function show($compteId): JsonResponse
+    public function show(Request $request, $compteId): JsonResponse
     {
         try {
-            // Recherche locale d'abord (comptes cheque/epargne actifs)
-            $compte = Compte::where('id', $compteId)
-                           ->whereIn('type', ['cheque', 'epargne'])
-                           ->where('statut', 'actif')
-                           ->with('client')
-                           ->first();
+            $user = $request->user();
 
-            // Si non trouvé en local, rechercher en serverless (tous les comptes)
+            // Recherche du compte
+            $compte = Compte::with('client')->find($compteId);
+
             if (!$compte) {
-                $compte = Compte::with('client')->find($compteId);
+                return response()->json([
+                    'success' => false,
+                    'error' => [
+                        'code' => 'COMPTE_NOT_FOUND',
+                        'message' => 'Le compte avec l\'ID spécifié n\'existe pas',
+                        'details' => [
+                            'compteId' => $compteId
+                        ]
+                    ]
+                ], 404);
+            }
 
-                // Log pour indiquer que la recherche serverless a été utilisée
-                if ($compte) {
-                    \Log::info("Compte trouvé via recherche serverless: {$compteId}");
+            // Vérification des permissions par rôle
+            if ($user && $user->hasRole('client')) {
+                // Client ne peut voir que ses propres comptes
+                if ($compte->client_id !== $user->id) {
+                    return response()->json([
+                        'success' => false,
+                        'error' => [
+                            'code' => 'ACCESS_DENIED',
+                            'message' => 'Vous n\'avez pas accès à ce compte',
+                            'details' => [
+                                'compteId' => $compteId
+                            ]
+                        ]
+                    ], 403);
                 }
             }
+            // Admin peut voir tous les comptes (pas de restriction)
 
             if (!$compte) {
                 return response()->json([
@@ -653,7 +672,7 @@ class CompteController extends Controller
      *                 @OA\Property(
      *                     property="details",
      *                     type="object",
-     *                     example={"general": ["Au moins un champ doit être fourni pour la mise à jour"]}
+     *                     description="Détails des erreurs de validation par champ"
      *                 )
      *             )
      *         )
