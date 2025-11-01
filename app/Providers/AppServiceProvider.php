@@ -19,6 +19,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Enregistrer les observers pour la synchronisation automatique
+        \App\Models\Client::observe(\App\Observers\ClientObserver::class);
+        \App\Models\Compte::observe(\App\Observers\CompteObserver::class);
+        \App\Models\Transaction::observe(\App\Observers\TransactionObserver::class);
     }
 }

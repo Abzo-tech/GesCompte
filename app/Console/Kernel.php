@@ -12,7 +12,16 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('inspire')->hourly();
+        // Synchronisation automatique des bases de données toutes les heures
+        $schedule->command('db:sync:auto --from=pgsql --to=neon')
+                ->hourly()
+                ->withoutOverlapping()
+                ->runInBackground();
+
+        // Autres tâches planifiées existantes...
+        $schedule->command('jobs:unblock-expired-accounts')->daily();
+        $schedule->command('jobs:archive-expired-blocked-accounts')->weekly();
+        $schedule->command('jobs:unarchive-expired-blocked-accounts')->weekly();
     }
 
     /**

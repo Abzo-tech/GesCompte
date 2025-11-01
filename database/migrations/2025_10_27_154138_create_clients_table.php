@@ -15,12 +15,10 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->string('nom');
             $table->string('prenom');
-            $table->string('email')->unique();
+            $table->string('email');
             $table->string('telephone')->nullable();
             $table->text('adresse')->nullable();
             $table->string('statut')->default('actif');
-            $table->string('password')->nullable();
-            $table->string('code_verification')->nullable();
             $table->timestamps();
         });
     }

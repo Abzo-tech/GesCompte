@@ -101,9 +101,18 @@ class AuthController extends Controller
                 'success' => true,
                 'message' => 'Login successful',
                 'data' => [
-                    'user' => $user->load('roles'),
-                    'access_token' => $token->accessToken,
-                    'refresh_token' => $token->accessToken, // For simplicity, using same token
+                    'user' => [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'is_active' => $user->is_active,
+                        'role' => $user->role ?? 'client', // Utiliser le champ role directement
+                        'roles' => [$user->role ?? 'client'], // Pour compatibilité
+                        'created_at' => $user->created_at,
+                        'updated_at' => $user->updated_at,
+                    ],
+                    'access_token' => $token->plainTextToken,
+                    'refresh_token' => $token->plainTextToken, // For simplicity, using same token
                     'token_type' => 'Bearer',
                     'expires_in' => 60 * 24 * 7 * 60 // 7 days in seconds
                 ]
@@ -263,9 +272,20 @@ class AuthController extends Controller
      */
     public function me(Request $request): JsonResponse
     {
+        $user = $request->user();
+
         return response()->json([
             'success' => true,
-            'data' => $request->user()
+            'data' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'is_active' => $user->is_active,
+                'role' => $user->role ?? 'client',
+                'roles' => [$user->role ?? 'client'],
+                'created_at' => $user->created_at,
+                'updated_at' => $user->updated_at,
+            ]
         ]);
     }
 }

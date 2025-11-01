@@ -46,6 +46,9 @@ Route::middleware([LoggingMiddleware::class])->group(function () {
 
             // Route pour restaurer un compte archivé
             Route::post('comptes/{compte}/restore', [CompteController::class, 'restore'])->name('comptes.restore');
+
+            // Route pour lister les comptes archivés
+            Route::get('comptes/archives', [CompteController::class, 'archives'])->name('comptes.archives');
         // });
     });
 });

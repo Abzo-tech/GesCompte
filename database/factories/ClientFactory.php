@@ -25,8 +25,6 @@ class ClientFactory extends Factory
             'telephone' => $this->faker->phoneNumber(),
             'adresse' => $this->faker->address(),
             'statut' => $this->faker->randomElement(['actif', 'inactif', 'suspendu']),
-            'password' => bcrypt('password123'),
-            'code_verification' => strtoupper($this->faker->bothify('??????')),
         ];
     }
 }

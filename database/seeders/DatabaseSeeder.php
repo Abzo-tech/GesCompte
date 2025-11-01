@@ -64,7 +64,7 @@ class DatabaseSeeder extends Seeder
             $client->roles()->attach($clientRole->id);
 
             // Créer un nouveau client associé à cet utilisateur
-            $clientData = \App\Models\Client::factory()->create([
+            $clientData = \App\Models\Client::create([
                 'id' => $client->id, // Même ID que l'utilisateur
                 'nom' => 'Dupont',
                 'prenom' => 'Marie',
@@ -74,37 +74,7 @@ class DatabaseSeeder extends Seeder
                 'statut' => 'actif'
             ]);
 
-            // Créer quelques comptes pour ce client
-            $compteCheque = \App\Models\Compte::factory()->create([
-                'client_id' => $client->id,
-                'type' => 'cheque',
-                'devise' => 'FCFA',
-                'statut' => 'actif'
-            ]);
-
-            $compteEpargne = \App\Models\Compte::factory()->create([
-                'client_id' => $client->id,
-                'type' => 'epargne',
-                'devise' => 'FCFA',
-                'statut' => 'actif'
-            ]);
-
-            // Créer des transactions pour calculer le solde
-            \App\Models\Transaction::factory()->create([
-                'compte_id' => $compteCheque->id,
-                'type' => 'depot',
-                'montant' => 150000,
-                'description' => 'Dépôt initial compte chèque',
-                'date_transaction' => now(),
-            ]);
-
-            \App\Models\Transaction::factory()->create([
-                'compte_id' => $compteEpargne->id,
-                'type' => 'depot',
-                'montant' => 500000,
-                'description' => 'Dépôt initial compte épargne',
-                'date_transaction' => now(),
-            ]);
+            echo "Client {$clientData->nom} créé avec succès\n";
         }
     }
 }
