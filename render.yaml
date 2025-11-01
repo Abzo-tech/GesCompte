@@ -44,6 +44,20 @@ services:
         # Si fresh échoue, essayer les migrations individuelles
         if php artisan migrate --force 2>&1; then
           echo "Individual migrations completed successfully"
+          # Créer un utilisateur admin si nécessaire
+          php artisan tinker --execute="
+            if (!\App\Models\User::where('email', 'admin@gmail.com')->exists()) {
+              \App\Models\User::create([
+                'name' => 'Admin User',
+                'email' => 'admin@gmail.com',
+                'password' => bcrypt('1234'),
+                'is_active' => true
+              ]);
+              echo 'Admin user created successfully';
+            } else {
+              echo 'Admin user already exists';
+            }
+          " 2>&1 || echo "Warning: Admin user creation failed"
           # Essayer le seeding séparément
           php artisan db:seed --force 2>&1 || echo "Warning: Seeding failed, but continuing"
         else
