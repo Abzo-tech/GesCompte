@@ -46,16 +46,35 @@ services:
           echo "Individual migrations completed successfully"
           # Créer un utilisateur admin si nécessaire
           php artisan tinker --execute="
-            if (!\App\Models\User::where('email', 'admin@gmail.com')->exists()) {
-              \App\Models\User::create([
-                'name' => 'Admin User',
-                'email' => 'admin@gmail.com',
-                'password' => bcrypt('1234'),
-                'is_active' => true
-              ]);
-              echo 'Admin user created successfully';
-            } else {
-              echo 'Admin user already exists';
+            try {
+              if (!\App\Models\User::where('email', 'admin@gmail.com')->exists()) {
+                \App\Models\User::create([
+                  'name' => 'Admin User',
+                  'email' => 'admin@gmail.com',
+                  'password' => bcrypt('1234'),
+                  'is_active' => true
+                ]);
+                echo 'Admin user created successfully';
+              } else {
+                echo 'Admin user already exists';
+              }
+            } catch (\Exception \$e) {
+              echo 'Error creating admin user: ' . \$e->getMessage();
+              // Essayer avec une approche différente
+              try {
+                \Illuminate\Support\Facades\DB::insert('INSERT INTO users (id, name, email, password, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT (email) DO NOTHING', [
+                  (string) \Illuminate\Support\Str::uuid(),
+                  'Admin User',
+                  'admin@gmail.com',
+                  bcrypt('1234'),
+                  true,
+                  now(),
+                  now()
+                ]);
+                echo 'Admin user created with raw SQL';
+              } catch (\Exception \$e2) {
+                echo 'Raw SQL creation also failed: ' . \$e2->getMessage();
+              }
             }
           " 2>&1 || echo "Warning: Admin user creation failed"
           # Essayer le seeding séparément
