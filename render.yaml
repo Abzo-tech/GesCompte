@@ -11,14 +11,9 @@ services:
       php artisan route:clear
       php artisan view:clear
 
-      # Attendre que la base de données soit prête avant les migrations
-      echo "Waiting for database connection..."
-      sleep 20
-      echo "Proceeding with migrations..."
-
-      # Exécution des migrations (le --force est nécessaire en production)
-      # Nettoyer et recréer la base de données
-      php artisan migrate:fresh --force --seed
+      # Désactiver temporairement les migrations pour éviter les conflits
+      echo "Skipping migrations to avoid conflicts - database should already be set up"
+      # php artisan migrate:status --force || echo "Database not ready, continuing without migrations"
 
       # Mise en cache pour la production
       php artisan config:cache
@@ -37,7 +32,7 @@ services:
       - key: APP_ENV
         value: production
       - key: APP_DEBUG
-        value: "false" # Temporairement à "true" pour voir les erreurs détaillées
+        value: "true" # Temporairement à "true" pour voir les erreurs détaillées
       - key: APP_KEY
         sync: false # IMPORTANT: Définissez APP_KEY comme un secret dans le tableau de bord Render
       - key: DB_CONNECTION
