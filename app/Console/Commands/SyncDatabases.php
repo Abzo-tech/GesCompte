@@ -13,7 +13,7 @@ class SyncDatabases extends Command
      *
      * @var string
      */
-    protected $signature = 'db:sync {--from=pgsql : Base de données source} {--to=neon : Base de données destination}';
+    protected $signature = 'db:sync {--from=pgsql : Base de données source} {--to=neon : Base de données destination} {--create-tables : Créer les tables si elles n\'existent pas}';
 
     /**
      * The console command description.
@@ -29,11 +29,20 @@ class SyncDatabases extends Command
     {
         $from = $this->option('from');
         $to = $this->option('to');
+        $createTables = $this->option('create-tables');
 
         $this->info("Synchronisation des données de {$from} vers {$to}");
 
         // Tables à synchroniser
         $tables = ['clients', 'comptes', 'transactions'];
+
+        // Si l'option --create-tables est activée, créer d'abord les tables
+        if ($createTables) {
+            $this->info("🏗️  Création des tables dans {$to} si nécessaire...");
+            foreach ($tables as $table) {
+                $this->ensureTableExists($table, $from, $to);
+            }
+        }
 
         foreach ($tables as $table) {
             $this->syncTable($table, $from, $to);
@@ -47,19 +56,8 @@ class SyncDatabases extends Command
         $this->info("Synchronisation de la table: {$table}");
 
         try {
-            // Vérifier si la table existe dans la destination
-            $tableExists = DB::connection($to)->select("SELECT EXISTS (
-                SELECT FROM information_schema.tables
-                WHERE table_schema = 'public'
-                AND table_name = ?
-            )", [$table]);
-
-            if (!$tableExists[0]->exists) {
-                $this->warn("⚠️  Table {$table} n'existe pas dans la base {$to}, création en cours...");
-
-                // Créer la table en copiant la structure depuis la source
-                $this->createTableFromSource($table, $from, $to);
-            }
+            // S'assurer que la table existe dans la destination
+            $this->ensureTableExists($table, $from, $to);
 
             // Vider la table destination
             DB::connection($to)->table($table)->truncate();
@@ -121,6 +119,28 @@ class SyncDatabases extends Command
 
         } catch (\Exception $e) {
             $this->error("❌ Erreur lors de la synchronisation de {$table}: " . $e->getMessage());
+        }
+    }
+
+    private function ensureTableExists($table, $from, $to)
+    {
+        try {
+            // Vérifier si la table existe dans la destination
+            $tableExists = DB::connection($to)->select("SELECT EXISTS (
+                SELECT FROM information_schema.tables
+                WHERE table_schema = 'public'
+                AND table_name = ?
+            )", [$table]);
+
+            if (!$tableExists[0]->exists) {
+                $this->warn("⚠️  Table {$table} n'existe pas dans la base {$to}, création en cours...");
+
+                // Créer la table en copiant la structure depuis la source
+                $this->createTableFromSource($table, $from, $to);
+            }
+        } catch (\Exception $e) {
+            $this->error("❌ Erreur lors de la vérification/création de la table {$table}: " . $e->getMessage());
+            throw $e;
         }
     }
 
