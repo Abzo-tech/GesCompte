@@ -21,7 +21,7 @@ services:
       - key: DB_CONNECTION
         value: pgsql
       - key: DB_HOST
-        value: ep-misty-bar-a4j2hw28-pooler.us-east-1.aws.neon.tech
+        value: ep-misty-bar-a4j2hw28.us-east-1.aws.neon.tech
       - key: DB_PORT
         value: 5432
       - key: DB_DATABASE
