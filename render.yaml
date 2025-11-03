@@ -1,109 +1,23 @@
 services:
   - type: web
-    name: gesbanque # Nom du service
+    name: gesbanque
     env: php
     buildCommand: |
-      # Installation des dépendances
-      composer install --no-interaction --optimize-autoloader --no-dev
-
-      # Effacer les anciens caches pour éviter les conflits
-      php artisan config:clear
-      php artisan route:clear
-      php artisan view:clear
-
-      # Attendre que la base de données soit prête avec vérification robuste
-      echo "Waiting for database connection..."
-      attempts=0
-      max_attempts=30
-
-      while [ $attempts -lt $max_attempts ]; do
-        if PGPASSWORD="${DB_PASSWORD}" psql "postgresql://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_DATABASE}?sslmode=require" -c "SELECT 1;" > /dev/null 2>&1; then
-          echo "Database connection successful"
-          break
-        else
-          echo "Database not ready - attempt $((attempts+1))/$max_attempts"
-          sleep 2
-          attempts=$((attempts+1))
-        fi
-      done
-
-      if [ $attempts -ge $max_attempts ]; then
-        echo "Warning: Database connection failed after $max_attempts attempts"
-        echo "Proceeding without database operations - application will start in degraded mode"
-      fi
-
-      # Stratégie de déploiement robuste avec gestion d'erreurs
-      echo "Running database setup with comprehensive error handling..."
-
-      # Essayer d'abord migrate:fresh avec seed
-      if php artisan migrate:fresh --force --seed 2>&1; then
-        echo "Fresh migrations with seed completed successfully"
-      else
-        echo "Fresh migrations failed, trying individual approach..."
-
-        # Si fresh échoue, essayer les migrations individuelles
-        if php artisan migrate --force 2>&1; then
-          echo "Individual migrations completed successfully"
-          # Créer un utilisateur admin si nécessaire
-          php artisan tinker --execute="
-            try {
-              if (!\App\Models\User::where('email', 'admin@gmail.com')->exists()) {
-                \App\Models\User::create([
-                  'name' => 'Admin User',
-                  'email' => 'admin@gmail.com',
-                  'password' => bcrypt('1234'),
-                  'is_active' => true
-                ]);
-                echo 'Admin user created successfully';
-              } else {
-                echo 'Admin user already exists';
-              }
-            } catch (\Exception \$e) {
-              echo 'Error creating admin user: ' . \$e->getMessage();
-              // Essayer avec une approche différente
-              try {
-                \Illuminate\Support\Facades\DB::insert('INSERT INTO users (id, name, email, password, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT (email) DO NOTHING', [
-                  (string) \Illuminate\Support\Str::uuid(),
-                  'Admin User',
-                  'admin@gmail.com',
-                  bcrypt('1234'),
-                  true,
-                  now(),
-                  now()
-                ]);
-                echo 'Admin user created with raw SQL';
-              } catch (\Exception \$e2) {
-                echo 'Raw SQL creation also failed: ' . \$e2->getMessage();
-              }
-            }
-          " 2>&1 || echo "Warning: Admin user creation failed"
-          # Essayer le seeding séparément
-          php artisan db:seed --force 2>&1 || echo "Warning: Seeding failed, but continuing"
-        else
-          echo "Warning: All migration attempts failed - application will start with limited database functionality"
-        fi
-      fi
-
-      # Mise en cache pour la production
+      composer install --no-dev --optimize-autoloader
+      php artisan key:generate
+      php artisan migrate --force
+      php artisan db:seed --force
       php artisan config:cache
       php artisan route:cache
       php artisan view:cache
-
-      # Génération de la documentation Swagger
-      if [ -f "vendor/darkaonline/l5-swagger/src/helpers.php" ]; then
-        php artisan l5-swagger:generate --all || echo "Warning: Swagger generation failed but continuing..."
-      else
-        echo "Warning: L5-Swagger package not found, skipping Swagger generation"
-      fi
-    startCommand: >
-      php artisan serve --host=0.0.0.0 --port=${PORT}
+    startCommand: php artisan serve --host=0.0.0.0 --port=$PORT
     envVars:
       - key: APP_ENV
         value: production
       - key: APP_DEBUG
-        value: "false" # Production mode
+        value: "false"
       - key: APP_KEY
-        sync: false # IMPORTANT: Définissez APP_KEY comme un secret dans le tableau de bord Render
+        sync: false
       - key: DB_CONNECTION
         value: pgsql
       - key: DB_HOST
@@ -115,12 +29,8 @@ services:
       - key: DB_USERNAME
         value: neondb_owner
       - key: DB_PASSWORD
-        sync: false # IMPORTANT: Définissez DB_PASSWORD comme un secret dans le tableau de bord Render
-      - key: DB_CONNECTION_TIMEOUT
-        value: 60
-      - key: DATABASE_URL
-        sync: false # IMPORTANT: Définissez DATABASE_URL comme un secret dans le tableau de bord Render
+        sync: false
       - key: APP_URL
-        value: https://gesbanque.onrender.com # Remplacez par l'URL de votre service Render
+        value: https://gescompte-1.onrender.com
       - key: LOG_CHANNEL
         value: stderr

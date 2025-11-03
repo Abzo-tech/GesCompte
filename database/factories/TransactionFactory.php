@@ -16,15 +16,15 @@ class TransactionFactory extends Factory
      */
     public function definition(): array
     {
-        $type = $this->faker->randomElement(['depot', 'retrait', 'virement', 'paiement']);
-        $montant = $this->faker->randomFloat(2, 10, 5000);
+        $type = fake()->randomElement(['depot', 'retrait', 'virement', 'paiement']);
+        $montant = fake()->randomFloat(2, 10, 5000);
 
         return [
             'type' => $type,
             'montant' => $montant,
-            'description' => $this->faker->sentence(),
-            'beneficiaire' => $type === 'virement' ? $this->faker->name() : null,
-            'date_transaction' => $this->faker->dateTimeBetween('-6 months', 'now'),
+            'description' => fake()->sentence(),
+            'beneficiaire' => $type === 'virement' ? fake()->name() : null,
+            'date_transaction' => fake()->dateTimeBetween('-6 months', 'now'),
             'compte_id' => \App\Models\Compte::inRandomOrder()->first()?->id ?? \App\Models\Compte::factory(),
         ];
     }

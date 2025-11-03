@@ -36,11 +36,6 @@ class RouteServiceProvider extends ServiceProvider
             Route::middleware('api')
                 ->prefix('api')
                 ->group(base_path('routes/api.php'));
-
-            // Routes API with 'dieng' prefix for Swagger
-            Route::middleware('api')
-                ->prefix('dieng')
-                ->group(base_path('routes/api.php'));
         });
     }
 }
