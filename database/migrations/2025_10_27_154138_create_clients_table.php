@@ -15,7 +15,7 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->string('nom');
             $table->string('prenom');
-            $table->string('email');
+            $table->string('email')->unique();
             $table->string('telephone')->nullable();
             $table->text('adresse')->nullable();
             $table->string('statut')->default('actif');
